@@ -38,9 +38,13 @@ def train(opt,Gs,Zs,reals,NoiseAmp):
         D_curr,G_curr = init_models(opt)
         if (nfc_prev==opt.nfc):
             G_prev = torch.load('%s/%d/netG.pth' % (opt.out_,scale_num-1))
-            G_curr.parameters().update(G_prev.parameters())
+            G_curr_params = G_curr.parameters()
+            G_curr_params.update(G_prev.parameters())
+            G_curr.load_state_dict(G_curr_params)
             D_prev = torch.load('%s/%d/netD.pth' % (opt.out_,scale_num-1))
-            D_curr.parameters().update(D_prev.parameters())
+            D_curr_params = D_curr.parameters()
+            D_curr_params.update(D_prev.parameters())
+            D_curr.load_state_dict(D_curr_params)
 
         z_curr,in_s,G_curr = train_single_scale(D_curr,G_curr,reals,Gs,Zs,in_s,NoiseAmp,opt)
 
