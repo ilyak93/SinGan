@@ -308,7 +308,9 @@ def init_models(opt):
 
     #generator initialization:
     netG = models.MyGeneratorConcatSkip2CleanAdd(opt).to(opt.device)
-    print(f'number of parameters of generator: {netG.count_parameters()}')
+    total_params = sum(p.numel() for p in netG.parameters())
+    train_params = sum(p.numel() for p in netG.parameters() if p.requires_grad)
+    print(f'number of parameters of generator: total={pytorch_total_params} train={train_params}')
     netG.apply(models.weights_init)
     if opt.netG != '':
         netG.load_state_dict(torch.load(opt.netG))
@@ -316,7 +318,9 @@ def init_models(opt):
 
     #discriminator initialization:
     netD = models.MyWDiscriminator(opt).to(opt.device)
-    print(f'number of parameters of generator: {netD.count_parameters()}')
+    total_params = sum(p.numel() for p in netD.parameters())
+    train_params = sum(p.numel() for p in netD.parameters() if p.requires_grad)
+    print(f'number of parameters of generator: total={pytorch_total_params} train={train_params}')
     netD.apply(models.weights_init)
     if opt.netD != '':
         netD.load_state_dict(torch.load(opt.netD))
