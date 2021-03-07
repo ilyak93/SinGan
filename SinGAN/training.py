@@ -307,6 +307,7 @@ def init_models(opt):
 
     #generator initialization:
     netG = models.MyGeneratorConcatSkip2CleanAdd(opt).to(opt.device)
+	print(f'number of parameters of generator: {netG.count_parameters()}')
     netG.apply(models.weights_init)
     if opt.netG != '':
         netG.load_state_dict(torch.load(opt.netG))
@@ -314,6 +315,7 @@ def init_models(opt):
 
     #discriminator initialization:
     netD = models.MyWDiscriminator(opt).to(opt.device)
+	print(f'number of parameters of generator: {netD.count_parameters()}')
     netD.apply(models.weights_init)
     if opt.netD != '':
         netD.load_state_dict(torch.load(opt.netD))
