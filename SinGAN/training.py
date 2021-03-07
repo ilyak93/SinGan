@@ -162,7 +162,7 @@ def train_single_scale(netD,netG,reals,Gs,Zs,in_s,NoiseAmp,opt,centers=None):
             gradient_penalty.backward()
 
             errD = errD_real + errD_fake + gradient_penalty
-			print(f'errD_real = {errD_real} errD_fake = {errD_fake} gradient_penalty = {gradient_penalty}')
+            print(f'errD_real = {errD_real} errD_fake = {errD_fake} gradient_penalty = {gradient_penalty}')
             optimizerD.step()
 
         errD2plot.append(errD.detach())
@@ -186,7 +186,7 @@ def train_single_scale(netD,netG,reals,Gs,Zs,in_s,NoiseAmp,opt,centers=None):
                 rec_loss = alpha*loss(netG(Z_opt.detach(),z_prev),real)
                 rec_loss.backward(retain_graph=True)
                 rec_loss = rec_loss.detach()
-				print(f'Reconstruction loss = {rec_loss}')
+                print(f'Reconstruction loss = {rec_loss}')
             else:
                 Z_opt = z_opt
                 rec_loss = 0
