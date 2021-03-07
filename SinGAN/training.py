@@ -17,6 +17,8 @@ def train(opt,Gs,Zs,reals,NoiseAmp):
     nfc_prev = 0
 
     while scale_num<opt.stop_scale+1:
+        opt.attn = False
+    
         opt.nfc = min(opt.nfc_init * pow(2, math.floor(scale_num / 4)), 128)
         opt.min_nfc = min(opt.min_nfc_init * pow(2, math.floor(scale_num / 4)), 128)
 
@@ -30,8 +32,9 @@ def train(opt,Gs,Zs,reals,NoiseAmp):
         #plt.imsave('%s/in.png' %  (opt.out_), functions.convert_image_np(real), vmin=0, vmax=1)
         #plt.imsave('%s/original.png' %  (opt.out_), functions.convert_image_np(real_), vmin=0, vmax=1)
         plt.imsave('%s/real_scale.png' %  (opt.outf), functions.convert_image_np(reals[scale_num]), vmin=0, vmax=1)
-        
         torch.cuda.empty_cache()#added to try to save memory
+        if scale_num >= 5:
+            opt.attn = True
         D_curr,G_curr = init_models(opt)
         if (nfc_prev==opt.nfc):
             G_curr.load_state_dict(torch.load('%s/%d/netG.pth' % (opt.out_,scale_num-1)))
@@ -308,9 +311,9 @@ def init_models(opt):
 
     #generator initialization:
     netG = models.MyGeneratorConcatSkip2CleanAdd(opt).to(opt.device)
-    total_params = sum(p.numel() for p in netG.parameters())
-    train_params = sum(p.numel() for p in netG.parameters() if p.requires_grad)
-    print(f'number of parameters of generator: total={total_params} train={train_params}')
+    #total_params = sum(p.numel() for p in netG.parameters())
+    #train_params = sum(p.numel() for p in netG.parameters() if p.requires_grad)
+    #print(f'number of parameters of generator: total={total_params} train={train_params}')
     netG.apply(models.weights_init)
     if opt.netG != '':
         netG.load_state_dict(torch.load(opt.netG))
@@ -318,9 +321,9 @@ def init_models(opt):
 
     #discriminator initialization:
     netD = models.MyWDiscriminator(opt).to(opt.device)
-    total_params = sum(p.numel() for p in netD.parameters())
-    train_params = sum(p.numel() for p in netD.parameters() if p.requires_grad)
-    print(f'number of parameters of generator: total={total_params} train={train_params}')
+    #total_params = sum(p.numel() for p in netD.parameters())
+    #train_params = sum(p.numel() for p in netD.parameters() if p.requires_grad)
+    #print(f'number of parameters of generator: total={total_params} train={train_params}')
     netD.apply(models.weights_init)
     if opt.netD != '':
         netD.load_state_dict(torch.load(opt.netD))

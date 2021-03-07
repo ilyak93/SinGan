@@ -133,13 +133,15 @@ class MyWDiscriminator(nn.Module):
             N = int(opt.nfc / pow(2, (i + 1)))
             block = ConvBlock(max(2 * N, opt.min_nfc), max(N, opt.min_nfc), opt.ker_size, opt.padd_size, 1)
             self.body.add_module('block%d' % (i + 1), block)
-        self.attn = Self_Attn( max(N, opt.min_nfc))
+        if opt.attn == True:
+            self.attn = Self_Attn( max(N, opt.min_nfc))
         self.tail = nn.Conv2d(max(N, opt.min_nfc), 1, kernel_size=opt.ker_size, stride=1, padding=opt.padd_size)
 
     def forward(self, x):
         x = self.head(x)
         x = self.body(x)
-        x,_ = self.attn(x)
+        if hasattr(self,'attn'):
+            x,_ = self.attn(x)
         x = self.tail(x)
         return x
 
@@ -156,7 +158,8 @@ class MyGeneratorConcatSkip2CleanAdd(nn.Module):
             N = int(opt.nfc / pow(2, (i + 1)))
             block = ConvBlock(max(2 * N, opt.min_nfc), max(N, opt.min_nfc), opt.ker_size, opt.padd_size, 1)
             self.body.add_module('block%d' % (i + 1), block)
-        self.attn = Self_Attn(max(N, opt.min_nfc))
+        if opt.attn == True:
+            self.attn = Self_Attn(max(N, opt.min_nfc))
         self.tail = nn.Sequential(
             nn.Conv2d(max(N, opt.min_nfc), opt.nc_im, kernel_size=opt.ker_size, stride=1, padding=opt.padd_size),
             nn.Tanh()
@@ -165,7 +168,8 @@ class MyGeneratorConcatSkip2CleanAdd(nn.Module):
     def forward(self, x, y):
         x = self.head(x)
         x = self.body(x)
-        x,_ = self.attn(x)
+        if hasattr(self,'attn'):
+            x,_ = self.attn(x)
         x = self.tail(x)
         ind = int((y.shape[2] - x.shape[2]) / 2)
         y = y[:, :, ind:(y.shape[2] - ind), ind:(y.shape[3] - ind)]
