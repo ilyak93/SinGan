@@ -162,6 +162,7 @@ def train_single_scale(netD,netG,reals,Gs,Zs,in_s,NoiseAmp,opt,centers=None):
             gradient_penalty.backward()
 
             errD = errD_real + errD_fake + gradient_penalty
+			print(f'errD_real = {errD_real} errD_fake = {errD_fake} gradient_penalty = {gradient_penalty}')
             optimizerD.step()
 
         errD2plot.append(errD.detach())
@@ -185,6 +186,7 @@ def train_single_scale(netD,netG,reals,Gs,Zs,in_s,NoiseAmp,opt,centers=None):
                 rec_loss = alpha*loss(netG(Z_opt.detach(),z_prev),real)
                 rec_loss.backward(retain_graph=True)
                 rec_loss = rec_loss.detach()
+				print(f'Reconstruction loss = {rec_loss}')
             else:
                 Z_opt = z_opt
                 rec_loss = 0
@@ -306,14 +308,14 @@ def train_paint(opt,Gs,Zs,reals,NoiseAmp,centers,paint_inject_scale):
 def init_models(opt):
 
     #generator initialization:
-    netG = models.MyGeneratorConcatSkip2CleanAdd(opt).to(opt.device)
+    netG = models.GeneratorConcatSkip2CleanAdd(opt).to(opt.device)
     netG.apply(models.weights_init)
     if opt.netG != '':
         netG.load_state_dict(torch.load(opt.netG))
     print(netG)
 
     #discriminator initialization:
-    netD = models.MyWDiscriminator(opt).to(opt.device)
+    netD = models.WDiscriminator(opt).to(opt.device)
     netD.apply(models.weights_init)
     if opt.netD != '':
         netD.load_state_dict(torch.load(opt.netD))
