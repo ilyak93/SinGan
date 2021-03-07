@@ -47,7 +47,8 @@ def train(opt,Gs,Zs,reals,NoiseAmp):
             filtered_D_prev = {k: v for k, v in D_prev.items() if k in D_curr_params}
             D_curr_params.update(filtered_D_prev)
             D_curr.load_state_dict(D_curr_params)
-
+            
+        print(f'allocated = {torch.cuda.memory_allocated()}, cached = {torch.cuda.memory_cached()}')
         z_curr,in_s,G_curr = train_single_scale(D_curr,G_curr,reals,Gs,Zs,in_s,NoiseAmp,opt)
 
         G_curr = functions.reset_grads(G_curr,False)
