@@ -30,8 +30,8 @@ def train(opt,Gs,Zs,reals,NoiseAmp):
         #plt.imsave('%s/in.png' %  (opt.out_), functions.convert_image_np(real), vmin=0, vmax=1)
         #plt.imsave('%s/original.png' %  (opt.out_), functions.convert_image_np(real_), vmin=0, vmax=1)
         plt.imsave('%s/real_scale.png' %  (opt.outf), functions.convert_image_np(reals[scale_num]), vmin=0, vmax=1)
-		
-		torch.cuda.empty_cache()#added to try to save memory
+        
+        torch.cuda.empty_cache()#added to try to save memory
         D_curr,G_curr = init_models(opt)
         if (nfc_prev==opt.nfc):
             G_curr.load_state_dict(torch.load('%s/%d/netG.pth' % (opt.out_,scale_num-1)))
