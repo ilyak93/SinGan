@@ -125,8 +125,7 @@ def train_single_scale(netD,netG,reals,Gs,Zs,in_s,NoiseAmp,opt,centers=None):
             output = netD(real).to(opt.device)
             #D_real_map = output.detach()
             errD_real = -output.mean()#-a
-            #errD_real.backward(retain_graph=True)
-            torch.autograd.backward(errD_real, retain_graph=True)
+            errD_real.backward(retain_graph=True)
             D_x = -errD_real.item()
 
             # train with fake
@@ -169,13 +168,11 @@ def train_single_scale(netD,netG,reals,Gs,Zs,in_s,NoiseAmp,opt,centers=None):
             fake = netG(noise.detach(),prev)
             output = netD(fake.detach())
             errD_fake = output.mean()
-            #errD_fake.backward(retain_graph=True)
-            torch.autograd.backward(errD_fake, retain_graph=True)
+            errD_fake.backward(retain_graph=True)
             D_G_z = output.mean().item()
 
             gradient_penalty = functions.calc_gradient_penalty(netD, real, fake, opt.lambda_grad, opt.device)
-            torch.autograd.backward(gradient_penalty)
-            #gradient_penalty.backward()
+            gradient_penalty.backward()
 
             errD = errD_real + errD_fake + gradient_penalty
             optimizerD.step()
