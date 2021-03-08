@@ -148,7 +148,7 @@ class GradientPaneltyLoss(nn.Module):
         disc_interpolates = self.netD(interpolates)
 
         gradients = torch.autograd.grad(outputs=disc_interpolates, inputs=interpolates,
-                                  grad_outputs=torch.ones(disc_interpolates.size()).to(device),#.cuda(), #if use_cuda else torch.ones(
+                                  grad_outputs=torch.ones(disc_interpolates.size()).to(self.device),#.cuda(), #if use_cuda else torch.ones(
                                       #disc_interpolates.size()),
                                   create_graph=True, retain_graph=True, only_inputs=True)[0]
         #LAMBDA = 1
