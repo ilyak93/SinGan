@@ -179,7 +179,7 @@ def train_single_scale(netD,netG,reals,Gs,Zs,in_s,NoiseAmp,opt,centers=None):
             modules = [module for k, module in netG._modules.items()]
 
             # now call the checkpoint API and get the output
-            fake = checkpoint_sequential(modules, segments, noise.detach(),prev)
+            fake = checkpoint_sequential(modules, segments, (noise.detach(),prev))
             
             output = netD(fake.detach())
             #output = checkpoint(netD, fake.detach())
