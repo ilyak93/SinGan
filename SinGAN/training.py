@@ -169,8 +169,8 @@ def train_single_scale(netD,netG,reals,Gs,Zs,in_s,NoiseAmp,opt,centers=None):
 
             #fake = netG(noise.detach(),prev)
             fake = checkpoint(netG, noise.detach(),prev)
-            #output = netD(fake.detach())
-            output = checkpoint(netD, fake.detach())
+            output = netD(fake.detach())
+            #output = checkpoint(netD, fake.detach())
             errD_fake = output.mean()
             errD_fake.backward(retain_graph=True)
             D_G_z = output.mean().item()
