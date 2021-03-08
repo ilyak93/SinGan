@@ -124,7 +124,7 @@ def train_single_scale(netD,netG,reals,Gs,Zs,in_s,NoiseAmp,opt,centers=None):
             netD.zero_grad()
 
             #output = netD(real).to(opt.device)
-            errD_real = checkpoint(netD, real)
+            output = checkpoint(netD, real)
             #D_real_map = output.detach()
             errD_real = -output.mean()#-a
             errD_real.backward(retain_graph=True)
