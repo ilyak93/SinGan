@@ -7,14 +7,18 @@ import torch.utils.data
 import math
 import matplotlib.pyplot as plt
 from SinGAN.imresize import imresize
+from pytorch_memlab import MemReporter
 
 def train(opt,Gs,Zs,reals,NoiseAmp):
+    reporter = MemReporter(linear)
     real_ = functions.read_image(opt)
     in_s = 0
     scale_num = 0
     real = imresize(real_,opt.scale1,opt)
     reals = functions.creat_reals_pyramid(real,reals,opt)
     nfc_prev = 0
+    print('========= after pyramid =========')
+    reporter.report()
 
     while scale_num<opt.stop_scale+1:
         opt.attn = False
@@ -33,9 +37,13 @@ def train(opt,Gs,Zs,reals,NoiseAmp):
         #plt.imsave('%s/original.png' %  (opt.out_), functions.convert_image_np(real_), vmin=0, vmax=1)
         plt.imsave('%s/real_scale.png' %  (opt.outf), functions.convert_image_np(reals[scale_num]), vmin=0, vmax=1)
         torch.cuda.empty_cache()#added to try to save memory
+        print('========= after empty cache =========')
+        reporter.report()
         if scale_num >= 6:
             opt.attn = True
         D_curr,G_curr = init_models(opt)
+        print('========= after init model cache =========')
+        reporter.report()
         if (nfc_prev==opt.nfc):
             G_prev = torch.load('%s/%d/netG.pth' % (opt.out_,scale_num-1))
             G_curr_params = G_curr.state_dict()
@@ -47,14 +55,22 @@ def train(opt,Gs,Zs,reals,NoiseAmp):
             filtered_D_prev = {k: v for k, v in D_prev.items() if k in D_curr_params}
             D_curr_params.update(filtered_D_prev)
             D_curr.load_state_dict(D_curr_params)
+        print('========= after preloading previous model =========')
+        reporter.report()
             
         print(f'allocated = {torch.cuda.memory_allocated()}, cached = {torch.cuda.memory_cached()}')
         z_curr,in_s,G_curr = train_single_scale(D_curr,G_curr,reals,Gs,Zs,in_s,NoiseAmp,opt)
+        
+        print('========= after training scale model =========')
+        reporter.report()
 
         G_curr = functions.reset_grads(G_curr,False)
         G_curr.eval()
         D_curr = functions.reset_grads(D_curr,False)
         D_curr.eval()
+        
+        print('========= after reset_grads =========')
+        reporter.report()
 
         Gs.append(G_curr)
         Zs.append(z_curr)
@@ -68,6 +84,10 @@ def train(opt,Gs,Zs,reals,NoiseAmp):
         scale_num+=1
         nfc_prev = opt.nfc
         del D_curr,G_curr
+        
+        print('========= after deleting D_curr G_curr =========')
+        reporter.report()
+        
     return
 
 
@@ -223,15 +243,6 @@ def train_single_scale(netD,netG,reals,Gs,Zs,in_s,NoiseAmp,opt,centers=None):
             #plt.imsave('%s/z_prev.png'   % (opt.outf), functions.convert_image_np(z_prev), vmin=0, vmax=1)
             
             # prints currently alive Tensors and Variables
-            
-            import gc
-            for obj in gc.get_objects():
-                try:
-                    if torch.is_tensor(obj) or (hasattr(obj, 'data') and torch.is_tensor(obj.data)):
-                        print(type(obj), obj.size())
-                except:
-                    pass
-
             
             torch.save(z_opt, '%s/z_opt.pth' % (opt.outf))
 
