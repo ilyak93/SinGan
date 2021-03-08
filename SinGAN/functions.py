@@ -132,7 +132,7 @@ class GradientPaneltyLoss(nn.Module):
         self.LAMBDA = LAMBDA
         self.device = device
 
-    def forward(real_data, fake_data):
+    def forward(self, real_data, fake_data):
         """Compute gradient penalty: (L2_norm(dy/dx) - 1)**2."""
         #print real_data.size()
         alpha = torch.rand(1, 1)
