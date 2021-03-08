@@ -8,6 +8,7 @@ import math
 import matplotlib.pyplot as plt
 from SinGAN.imresize import imresize
 from torch.utils.checkpoint import checkpoint
+from memory_saving_gradients import gradients
 
 def train(opt,Gs,Zs,reals,NoiseAmp):
     real_ = functions.read_image(opt)
@@ -168,7 +169,17 @@ def train_single_scale(netD,netG,reals,Gs,Zs,in_s,NoiseAmp,opt,centers=None):
                 noise = opt.noise_amp*noise_+prev
 
             #fake = netG(noise.detach(),prev)
-            fake = checkpoint(netG, noise.detach(),prev)
+            #fake = checkpoint(netG, noise.detach(),prev)
+            # set the number of checkpoint segments
+            segments = 2
+
+            # get the modules in the model. These modules should be in the order
+            # the model should be executed
+            modules = [module for k, module in netG._modules.items()]
+
+            # now call the checkpoint API and get the output
+            fake = checkpoint_sequential(modules, segments, noise.detach(),prev)
+            
             output = netD(fake.detach())
             #output = checkpoint(netD, fake.detach())
             errD_fake = output.mean()
