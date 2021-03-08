@@ -10,7 +10,7 @@ from SinGAN.imresize import imresize
 from pytorch_memlab import MemReporter
 
 def train(opt,Gs,Zs,reals,NoiseAmp):
-    reporter = MemReporter(linear)
+    reporter = MemReporter()
     real_ = functions.read_image(opt)
     in_s = 0
     scale_num = 0
