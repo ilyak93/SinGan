@@ -10,6 +10,7 @@ from SinGAN.imresize import imresize
 from torch.utils.checkpoint import checkpoint
 from torch.utils.checkpoint import checkpoint_sequential
 #from memory_saving_gradients import gradients
+from functions import GradientPaneltyLoss
 
 def train(opt,Gs,Zs,reals,NoiseAmp):
     real_ = functions.read_image(opt)

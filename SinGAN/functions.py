@@ -15,6 +15,7 @@ import random
 from sklearn.cluster import KMeans
 
 
+
 # custom weights initialization called on netG and netD
 
 def read_image(opt):
