@@ -8,6 +8,7 @@ import math
 import matplotlib.pyplot as plt
 from SinGAN.imresize import imresize
 from torch.utils.checkpoint import checkpoint
+from torch.utils.checkpoint import checkpoint_sequential
 #from memory_saving_gradients import gradients
 
 def train(opt,Gs,Zs,reals,NoiseAmp):
