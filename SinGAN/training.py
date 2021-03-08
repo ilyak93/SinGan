@@ -224,7 +224,6 @@ def train_single_scale(netD,netG,reals,Gs,Zs,in_s,NoiseAmp,opt,centers=None):
             
             # prints currently alive Tensors and Variables
             
-            import torch
             import gc
             for obj in gc.get_objects():
                 try:
@@ -233,7 +232,7 @@ def train_single_scale(netD,netG,reals,Gs,Zs,in_s,NoiseAmp,opt,centers=None):
                 except:
                     pass
 
-            
+            '''
             torch.save(z_opt, '%s/z_opt.pth' % (opt.outf))
 
         schedulerD.step()
