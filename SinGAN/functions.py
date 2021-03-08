@@ -13,6 +13,7 @@ from SinGAN.imresize import imresize
 import os
 import random
 from sklearn.cluster import KMeans
+from torch.utils.checkpoint import checkpoint
 
 
 # custom weights initialization called on netG and netD
