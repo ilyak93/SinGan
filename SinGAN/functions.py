@@ -135,7 +135,7 @@ class GradientPaneltyLoss(nn.Module):
     def forward(self, real_data, fake_data):
         """Compute gradient penalty: (L2_norm(dy/dx) - 1)**2."""
         #print real_data.size()
-        with torch.grad:
+        with torch.enable_grad():
             alpha = torch.rand(1, 1)
             alpha = alpha.expand(real_data.size())
             alpha = alpha.to(self.device)#cuda() #gpu) #if use_cuda else alpha
