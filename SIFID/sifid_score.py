@@ -237,10 +237,10 @@ def calculate_sifid_given_paths(path1, path2, batch_size, cuda, dims, suffix):
     fid_values = []
     Im_ind = []
     for i in range(len(files2)):
-        m1, s1 = calculate_activation_statistics([files1[i]], model, batch_size, dims, cuda)
+        m1, s1 = calculate_activation_statistics([files1[0]], model, batch_size, dims, cuda)
         m2, s2 = calculate_activation_statistics([files2[i]], model, batch_size, dims, cuda)
         fid_values.append(calculate_frechet_distance(m1, s1, m2, s2))
-        file_num1 = files1[i].name
+        file_num1 = files1[0].name
         file_num2 = files2[i].name
         Im_ind.append(int(file_num1[:-4]))
         Im_ind.append(int(file_num2[:-4]))
