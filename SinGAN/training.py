@@ -231,6 +231,16 @@ def train_single_scale(netD,netG,reals,Gs,Zs,in_s,NoiseAmp,opt,centers=None):
             # prints currently alive Tensors and Variables
             
             torch.save(z_opt, '%s/z_opt.pth' % (opt.outf))
+            
+            print('Generator loss:')
+            plt.plot(list(range(0, len(errG2plot))), errG2plot)
+            plt.show()
+            print('Discriminator real loss:')
+            plt.plot(list(range(0, len(D_real2plot))), D_real2plot)
+            plt.show()
+            print('Discriminator fake loss:')
+            plt.plot(list(range(0, len(D_fake2plot))), D_fake2plot)
+            plt.show()
 
         schedulerD.step()
         schedulerG.step()
