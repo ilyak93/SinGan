@@ -260,3 +260,4 @@ if __name__ == '__main__':
     sifid_values = np.asarray(sifid_values,dtype=np.float32)
     numpy.save('SIFID', sifid_values)
     print('SIFID: ', sifid_values.mean())
+	return sifid_values.mean()
