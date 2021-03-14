@@ -36,7 +36,7 @@ def train(opt,Gs,Zs,reals,NoiseAmp):
         #plt.imsave('%s/original.png' %  (opt.out_), functions.convert_image_np(real_), vmin=0, vmax=1)
         plt.imsave('%s/real_scale.png' %  (opt.outf), functions.convert_image_np(reals[scale_num]), vmin=0, vmax=1)
         torch.cuda.empty_cache()#added to try to save memory
-        if scale_num >= 6:
+        if scale_num >= 0:
             opt.attn = True
         D_curr,G_curr = init_models(opt)
         if (nfc_prev==opt.nfc):
