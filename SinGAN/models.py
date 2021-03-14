@@ -303,6 +303,8 @@ class My21GeneratorConcatSkip2CleanAdd(nn.Module):
                 num_dimensions = 2,    # number of axial dimensions (images is 2, video is 3, or more)
                 sum_axial_out = True   # whether to sum the contributions of attention on each axis, or to run the input through them sequentially. defaults to true
             )
+            self.mlp_l1 = nn.Linear(max(N, opt.min_nfc), max(N, opt.min_nfc), bias=False)
+            self.mlp_l2 = nn.Linear(max(N, opt.min_nfc), max(N, opt.min_nfc), bias=False)
         self.tail = nn.Sequential(
             nn.Conv2d(max(N, opt.min_nfc), opt.nc_im, kernel_size=opt.ker_size, stride=1, padding=opt.padd_size),
             nn.Tanh()
@@ -314,6 +316,8 @@ class My21GeneratorConcatSkip2CleanAdd(nn.Module):
         if hasattr(self,'attn'):
             #x,_ = self.attn(x)
             x = x+self.attn(x)
+            y = self.mlp_l1(x)
+            x = self.mlp_l2(x + y)
         x = self.tail(x)
         ind = int((y.shape[2] - x.shape[2]) / 2)
         y = y[:, :, ind:(y.shape[2] - ind), ind:(y.shape[3] - ind)]
