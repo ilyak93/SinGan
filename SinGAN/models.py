@@ -322,7 +322,7 @@ class My21GeneratorConcatSkip2CleanAdd(nn.Module):
         
 class My22WDiscriminator(nn.Module):
     def __init__(self, opt):
-        super(My21WDiscriminator, self).__init__()
+        super(My22WDiscriminator, self).__init__()
         self.is_cuda = torch.cuda.is_available()
         N = int(opt.nfc)
         self.head = ConvBlock(opt.nc_im, N, opt.ker_size, opt.padd_size, 1)
@@ -358,7 +358,7 @@ class My22WDiscriminator(nn.Module):
 
 class My22GeneratorConcatSkip2CleanAdd(nn.Module):
     def __init__(self, opt):
-        super(My21GeneratorConcatSkip2CleanAdd, self).__init__()
+        super(My22GeneratorConcatSkip2CleanAdd, self).__init__()
         self.is_cuda = torch.cuda.is_available()
         N = opt.nfc
         self.head = ConvBlock(opt.nc_im, N, opt.ker_size, opt.padd_size,
