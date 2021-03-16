@@ -603,9 +603,9 @@ class ImageAttn(nn.Module):
         k = self.k_dense(X)
         v = self.v_dense(X)
         # Split to shape [batch_size, num_heads, len, depth / num_heads]
-        q = q.view(q.shape[:-1] + (self.num_heads, self.kd // self.num_heads)).permute([0, 2, 1, 3])
-        k = k.view(k.shape[:-1] + (self.num_heads, self.kd // self.num_heads)).permute([0, 2, 1, 3])
-        v = v.view(v.shape[:-1] + (self.num_heads, self.vd // self.num_heads)).permute([0, 2, 1, 3])
+        q = q.view(q.shape[:-1] + (self.num_heads, self.kd // self.num_heads)).permute([0, 2, 1, 3]).contiguous()
+        k = k.view(k.shape[:-1] + (self.num_heads, self.kd // self.num_heads)).permute([0, 2, 1, 3]).contiguous()
+        v = v.view(v.shape[:-1] + (self.num_heads, self.vd // self.num_heads)).permute([0, 2, 1, 3]).contiguous()
         q *= (self.kd // self.num_heads) ** (-0.5)
 
         if self.attn_type == "global":
@@ -641,7 +641,7 @@ class ImageAttn(nn.Module):
         result = result.permute([0, 2, 1, 3]).contiguous()
         result = result.view(result.shape[0:2] + (-1,))
         result = self.output_dense(result)
-        result = result.view(orig_shape[0],orig_shape[1], orig_shape[2] ,orig_shape[3]).permute([0, 3, 1, 2])
+        result = result.view(orig_shape[0],orig_shape[1], orig_shape[2] ,orig_shape[3]).permute([0, 3, 1, 2]).contiguous()
         return result        
 
 class My31WDiscriminator(nn.Module):
