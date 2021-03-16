@@ -661,7 +661,7 @@ class DecoderAttnLayer(nn.Module):
     def forward(self, X):
         y = self.attn(X)
         X = self.layernorm_attn(self.dropout(y) + X)
-        y = self.ffn(self.preprocess_(X))
+        y = self.ffn(X)
         X = self.layernorm_ffn(self.dropout(y) + X)
         return X
 
