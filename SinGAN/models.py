@@ -574,15 +574,15 @@ class My24GeneratorConcatSkip2CleanAdd(nn.Module):
 
 class DecoderAttnLayer(nn.Module):
     """Implements a single layer of an unconditional ImageTransformer"""
-    def __init__(self, in_dim, num_heads, block_length, dropout):
+    def __init__(self, in_dim, num_heads, block_length, dropout=0.1):
         super().__init__()
         self.attn = ImageAttn(in_dim, num_heads, block_length)
         self.dropout = nn.Dropout(p=dropout)
         self.layernorm_attn = nn.LayerNorm([in_dim], eps=1e-6, elementwise_affine=True)
         self.layernorm_ffn = nn.LayerNorm([in_dim], eps=1e-6, elementwise_affine=True)
-        self.ffn = nn.Sequential(nn.Linear(in_dim, in_dim, bias=True),
+        self.ffn = nn.Sequential(nn.Linear(in_dim, 2*in_dim, bias=True),
                                  nn.ReLU(),
-                                 nn.Linear(in_dim, in_dim, bias=True))
+                                 nn.Linear(2*in_dim, in_dim, bias=True))
 
 
     # Takes care of the "postprocessing" from tensorflow code with the layernorm and dropout
