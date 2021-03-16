@@ -570,7 +570,79 @@ class My24GeneratorConcatSkip2CleanAdd(nn.Module):
         y = y[:, :, ind:(y.shape[2] - ind), ind:(y.shape[3] - ind)]
         return x + y
         
-        
+
+class ImageAttn(nn.Module):
+    def __init__(self, in_dim, num_heads, block_length, attn_type='global'): #block length = number of columnes
+        super().__init__()
+        self.hidden_size = in_dim
+        self.kd = in_dim // 2
+        self.vd = in_dim
+        self.num_heads = num_heads
+        self.attn_type = attn_type
+        self.block_length = block_length
+        self.q_dense = nn.Linear(self.hidden_size, self.kd, bias=False)
+        self.k_dense = nn.Linear(self.hidden_size, self.kd, bias=False)
+        self.v_dense = nn.Linear(self.hidden_size, self.vd, bias=False)
+        self.output_dense = nn.Linear(self.vd, self.hidden_size, bias=False)
+        assert self.kd % self.num_heads == 0
+        assert self.vd % self.num_heads == 0
+
+    def dot_product_attention(self, q, k, v, bias=None):
+        logits = torch.einsum("...kd,...qd->...qk", k, q)
+        if bias is not None:
+            logits += bias
+        weights = F.softmax(logits, dim=-1)
+        return weights @ v
+
+    def forward(self, X):
+        X = X.permute([0, 2, 3, 1]).contiguous()
+        orig_shape = X.shape
+        #X = X.view(X.shape[0], X.shape[1], X.shape[2] * X.shape[3])  # Flatten channels into width
+        X = X.view(X.shape[0], -1, X.shape[3])
+        q = self.q_dense(X)
+        k = self.k_dense(X)
+        v = self.v_dense(X)
+        # Split to shape [batch_size, num_heads, len, depth / num_heads]
+        q = q.view(q.shape[:-1] + (self.num_heads, self.kd // self.num_heads)).permute([0, 2, 1, 3])
+        k = k.view(k.shape[:-1] + (self.num_heads, self.kd // self.num_heads)).permute([0, 2, 1, 3])
+        v = v.view(v.shape[:-1] + (self.num_heads, self.vd // self.num_heads)).permute([0, 2, 1, 3])
+        q *= (self.kd // self.num_heads) ** (-0.5)
+
+        if self.attn_type == "global":
+            bias = -1e9 * torch.triu(torch.ones(X.shape[1], X.shape[1]), 1).to(X.device)
+            result = self.dot_product_attention(q, k, v, bias=bias)
+        elif self.attn_type == "local_1d":
+            len = X.shape[1]
+            blen = self.block_length
+            pad = (0, 0, 0, (-len) % self.block_length) # Append to multiple of block length
+            q = F.pad(q, pad)
+            k = F.pad(k, pad)
+            v = F.pad(v, pad)
+
+            bias = -1e9 * torch.triu(torch.ones(blen, blen), 1).to(X.device)
+            first_output = self.dot_product_attention(
+                q[:,:,:blen,:], k[:,:,:blen,:], v[:,:,:blen,:], bias=bias)
+
+            if q.shape[2] > blen:
+                q = q.view(q.shape[0], q.shape[1], -1, blen, q.shape[3])
+                k = k.view(k.shape[0], k.shape[1], -1, blen, k.shape[3])
+                v = v.view(v.shape[0], v.shape[1], -1, blen, v.shape[3])
+                local_k = torch.cat([k[:,:,:-1], k[:,:,1:]], 3) # [batch, nheads, (nblocks - 1), blen * 2, depth]
+                local_v = torch.cat([v[:,:,:-1], v[:,:,1:]], 3)
+                tail_q = q[:,:,1:]
+                bias = -1e9 * torch.triu(torch.ones(blen, 2 * blen), blen + 1).to(X.device)
+                tail_output = self.dot_product_attention(tail_q, local_k, local_v, bias=bias)
+                tail_output = tail_output.view(tail_output.shape[0], tail_output.shape[1], -1, tail_output.shape[4])
+                result = torch.cat([first_output, tail_output], 2)
+                result = result[:,:,:X.shape[1],:]
+            else:
+                result = first_output[:,:,:X.shape[1],:]
+
+        result = result.permute([0, 2, 1, 3]).contiguous()
+        result = result.view(result.shape[0:2] + (-1,))
+        result = self.output_dense(result)
+        result = result.view(orig_shape[0],orig_shape[1], orig_shape[2] ,orig_shape[3]).permute([0, 3, 1, 2])
+        return result        
 
 class DecoderAttnLayer(nn.Module):
     """Implements a single layer of an unconditional ImageTransformer"""
