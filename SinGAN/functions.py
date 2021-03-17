@@ -38,6 +38,17 @@ def norm(x):
 #    out = (I1-I2.mean())*2
 #    return out#.clamp(I2.min(), I2.max())
 
+def im_save(name, path, images, vmin, vmax):
+    if images.shape[0] == 1:
+        plt.imsave('%s/%s.png' % (path,name), convert_image_np(images), vmin=vmin, vmax=vmax)
+        return
+    for i in range(images.shape[0]):
+        plt.imsave('%s/%s%s.png' % (path, name, i), convert_image_np(images[i, :, :, :].unsqueeze(0)), vmin=vmin, vmax=vmax)
+
+
+
+
+
 def convert_image_np(inp):
     if inp.shape[1]==3:
         inp = denorm(inp)
@@ -124,7 +135,7 @@ def move_to_cpu(t):
     t = t.to(torch.device('cpu'))
     return t
 
-def calc_gradient_penalty(netD, real_data, fake_data, LAMBDA, device):
+def calc_gradient_penalty(netD, real_data, fake_data, LAMBDA, device, opt):
     #print real_data.size()
     alpha = torch.rand(1, 1)
     alpha = alpha.expand(real_data.size())
@@ -133,10 +144,17 @@ def calc_gradient_penalty(netD, real_data, fake_data, LAMBDA, device):
     interpolates = alpha * real_data + ((1 - alpha) * fake_data)
 
 
+
     interpolates = interpolates.to(device)#.cuda()
     interpolates = torch.autograd.Variable(interpolates, requires_grad=True)
 
-    disc_interpolates = netD(interpolates)
+    real_batch_sz = 1
+    if opt.mode == 'train_gif':
+        d_state = netD.init_hidden(real_batch_sz)
+
+        disc_interpolates, _, _ = netD(interpolates, d_state)
+    else:
+        disc_interpolates = netD(interpolates)
 
     gradients = torch.autograd.grad(outputs=disc_interpolates, inputs=interpolates,
                               grad_outputs=torch.ones(disc_interpolates.size()).to(device),#.cuda(), #if use_cuda else torch.ones(
@@ -146,11 +164,22 @@ def calc_gradient_penalty(netD, real_data, fake_data, LAMBDA, device):
     gradient_penalty = ((gradients.norm(2, dim=1) - 1) ** 2).mean() * LAMBDA
     return gradient_penalty
 
-def read_image(opt):
-    x = img.imread('%s/%s' % (opt.input_dir,opt.input_name))
-    x = np2torch(x,opt)
-    x = x[:,0:3,:,:]
+def read_single_image(opt, path):
+    x = img.imread(path)
+    x = np2torch(x, opt)
+    x = x[:, 0:3, :, :]
     return x
+
+def read_image(opt):
+    if opt.mode == 'train':
+        return read_single_image(opt, '%s/%s' % (opt.input_dir, opt.input_name))
+    elif opt.mode == 'train_gif':
+        images_name = sorted(os.listdir(opt.input_dir))
+        images = read_single_image(opt, '%s/%s' % (opt.input_dir, images_name[0]))
+        for img_name in images_name[1:]:
+            x = read_single_image(opt, '%s/%s' % (opt.input_dir, img_name))
+            images = torch.cat((images, x[:, 0:3, :, :]), 0)
+    return images
 
 def read_image_dir(dir,opt):
     x = img.imread('%s' % (dir))
@@ -287,7 +316,10 @@ def post_config(opt):
     opt.nfc_init = opt.nfc
     opt.min_nfc_init = opt.min_nfc
     opt.scale_factor_init = opt.scale_factor
-    opt.out_ = 'TrainedModels/%s/scale_factor=%f/' % (opt.input_name[:-4], opt.scale_factor)
+    if opt.input_name:
+        opt.out_ = 'TrainedModels/%s/scale_factor=%f/' % (opt.input_name[:-4], opt.scale_factor)
+    else :
+        opt.out_ = 'TrainedModels/%s/scale_factor=%f/' % (opt.input_dir[:-4], opt.scale_factor)
     if opt.mode == 'SR':
         opt.alpha = 100
 

@@ -45,14 +45,23 @@ def torch2uint8(x):
     x = x.astype(np.uint8)
     return x
 
-
-def imresize(im,scale,opt):
+def single_imresize(im,scale,opt):
     #s = im.shape
     im = torch2uint8(im)
     im = imresize_in(im, scale_factor=scale)
     im = np2torch(im,opt)
     #im = im[:, :, 0:int(scale * s[2]), 0:int(scale * s[3])]
     return im
+
+def imresize(im,scale,opt):
+    if im.shape[0] > 1:
+        images = single_imresize(im[0, :, :, :].unsqueeze(0), scale, opt)
+        for i in range(im.shape[0])[1:]:
+            image = single_imresize(im[i,:,:,:].unsqueeze(0), scale, opt)
+            images = torch.cat((images, image), 0)
+    else:
+        return single_imresize(im, scale,opt)
+    return images
 
 def imresize_to_shape(im,output_shape,opt):
     #s = im.shape
