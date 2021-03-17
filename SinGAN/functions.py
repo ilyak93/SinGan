@@ -16,10 +16,11 @@ from sklearn.cluster import KMeans
 
 
 # custom weights initialization called on netG and netD
-
+'''
 def read_image(opt):
     x = img.imread('%s%s' % (opt.input_img,opt.ref_image))
     return np2torch(x)
+'''
 
 def denorm(x):
     out = (x + 1) / 2
