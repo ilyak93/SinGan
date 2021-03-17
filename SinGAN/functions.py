@@ -287,7 +287,7 @@ def generate_dir2save(opt):
     if (opt.mode == 'train') | (opt.mode == 'SR_train'):
         dir2save = 'TrainedModels/%s/scale_factor=%f,alpha=%d' % (opt.input_name[:-4], opt.scale_factor_init,opt.alpha)
     elif (opt.mode == 'animation_train') :
-        dir2save = 'TrainedModels/%s/scale_factor=%f_noise_padding' % (opt.input_name[:-5], opt.scale_factor_init)
+        dir2save = 'TrainedModels/%s/scale_factor=%f_noise_padding' % (opt.input_name[:-4], opt.scale_factor_init)
     elif (opt.mode == 'paint_train') :
         dir2save = 'TrainedModels/%s/scale_factor=%f_paint/start_scale=%d' % (opt.input_name[:-4], opt.scale_factor_init,opt.paint_start_scale)
     elif opt.mode == 'random_samples':
