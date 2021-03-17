@@ -795,3 +795,155 @@ class My32GeneratorConcatSkip2CleanAdd(nn.Module):
         ind = int((y.shape[2] - x.shape[2]) / 2)
         y = y[:, :, ind:(y.shape[2] - ind), ind:(y.shape[3] - ind)]
         return x + y
+		
+
+import torch.nn as nn
+import torch.nn.functional as F
+
+
+class CRnnDiscriminator(nn.Module):
+    ''' C-RNN-GAN discrminator
+    '''
+
+    def __init__(self,opt , hidden_units=256, drop_prob=0.1, use_cuda=False):
+
+        super(CRnnDiscriminator, self).__init__()
+
+        # params
+        _, chns, ln, wd = opt.cur_real_shape
+        self.num_feats = chns * (ln+10) * (wd+10)
+        self.hidden_dim = int(self.num_feats / chns)
+        self.num_layers = 2
+        self.use_cuda = torch.cuda.is_available()
+
+        self.dropout = nn.Dropout(p=drop_prob)
+
+        self.lstm = nn.LSTM(input_size=self.num_feats, hidden_size=self.hidden_dim,
+                            num_layers=self.num_layers, batch_first=True, dropout=drop_prob,
+                            bidirectional=True)
+        self.fc_layer = nn.Linear(in_features=(2 * self.hidden_dim), out_features=self.num_feats)
+
+    def forward(self, note_seq, state):
+        ''' Forward prop
+        '''
+        if self.use_cuda:
+            note_seq = note_seq.cuda()
+
+        seq_len, ch, ln, wd = note_seq.shape
+        note_seq = note_seq.unsqueeze(0).view(1, seq_len, -1)
+        # note_seq: (batch_size, seq_len, num_feats)
+        drop_in = self.dropout(note_seq)  # input with dropout
+        # (batch_size, seq_len, num_directions*hidden_size)
+        lstm_out, state = self.lstm(drop_in, state)
+        # (batch_size, seq_len, 1)
+        out = self.fc_layer(lstm_out)
+        out = torch.sigmoid(out)
+
+        out = out.squeeze().view(seq_len, ch, ln, wd)
+
+        #num_dims = len(out.shape)
+        #reduction_dims = tuple(range(1, num_dims))
+        ## (batch_size)
+        #out = torch.mean(out, dim=reduction_dims)
+
+        return out, lstm_out, state
+
+    def init_hidden(self, batch_size):
+        ''' Initialize hidden state '''
+        # create NEW tensor with SAME TYPE as weight
+        weight = next(self.parameters()).data
+
+        layer_mult = 2  # for being bidirectional
+
+        if self.use_cuda:
+            hidden = (weight.new(self.num_layers * layer_mult, batch_size,
+                                 self.hidden_dim).zero_().cuda(),
+                      weight.new(self.num_layers * layer_mult, batch_size,
+                                 self.hidden_dim).zero_().cuda())
+        else:
+            hidden = (weight.new(self.num_layers * layer_mult, batch_size,
+                                 self.hidden_dim).zero_(),
+                      weight.new(self.num_layers * layer_mult, batch_size,
+                                 self.hidden_dim).zero_())
+
+        return hidden
+
+class CRnnGenerator(nn.Module):
+    ''' C-RNN-GAN generator
+    '''
+
+    def __init__(self, opt, hidden_units=256, drop_prob=0.6, use_cuda=False):
+        super(CRnnGenerator, self).__init__()
+
+        # params
+        self.use_cuda = torch.cuda.is_available()
+        _, chns, ln, wd = opt.cur_real_shape
+        self.num_feats = chns * (ln + 10) * (wd + 10)
+        self.hidden_dim = int(self.num_feats / chns)
+        self.fc_layer1 = nn.Linear(in_features=(self.num_feats * 2), out_features=self.hidden_dim)
+        self.lstm_cell1 = nn.LSTMCell(input_size=self.hidden_dim, hidden_size=self.hidden_dim)
+        self.dropout = nn.Dropout(p=drop_prob)
+        self.lstm_cell2 = nn.LSTMCell(input_size=self.hidden_dim, hidden_size=self.hidden_dim)
+        self.fc_layer2 = nn.Linear(in_features=self.hidden_dim, out_features=self.num_feats)
+
+    def forward(self, z, y, states):
+        ''' Forward prop
+        '''
+        if self.use_cuda:
+            z = z.cuda()
+        # z: (batch_size, seq_len, num_feats)
+        # z here is the uniformly random vector
+        orig_shape = z.shape
+        z = z.unsqueeze(0).view(1, z.shape[0], -1)
+        batch_size, seq_len, num_feats = z.shape
+
+        # split to seq_len * (batch_size * num_feats)
+        z = torch.split(z, 1, dim=1)
+        z = [z_step.squeeze(dim=1) for z_step in z]
+
+        # create dummy-previous-output for first timestep
+        prev_gen = torch.empty([batch_size, num_feats]).uniform_()
+        if self.use_cuda:
+            prev_gen = prev_gen.cuda()
+
+        # manually process each timestep
+        state1, state2 = states  # (h1, c1), (h2, c2)
+        gen_feats = []
+        for z_step in z:
+            # concatenate current input features and previous timestep output features
+            concat_in = torch.cat((z_step, prev_gen), dim=-1)
+            out = F.relu(self.fc_layer1(concat_in))
+            h1, c1 = self.lstm_cell1(out, state1)
+            h1 = self.dropout(h1)  # feature dropout only (no recurrent dropout)
+            h2, c2 = self.lstm_cell2(h1, state2)
+            prev_gen = self.fc_layer2(h2)
+            # prev_gen = F.relu(self.fc_layer2(h2)) #DEBUG
+            gen_feats.append(prev_gen)
+
+            state1 = (h1, c1)
+            state2 = (h2, c2)
+
+        # seq_len * (batch_size * num_feats) -> (batch_size * seq_len * num_feats)
+        gen_feats = [gen_feats_step.view(orig_shape[1], orig_shape[2], orig_shape[3]) for gen_feats_step in gen_feats]
+        gen_feats = torch.stack(gen_feats, dim=0)
+
+        states = (state1, state2)
+        return gen_feats+y, states
+
+    def init_hidden(self, batch_size):
+        ''' Initialize hidden state '''
+        # create NEW tensor with SAME TYPE as weight
+        weight = next(self.parameters()).data
+
+        if (self.use_cuda):
+            hidden = ((weight.new(batch_size, self.hidden_dim).zero_().cuda(),
+                       weight.new(batch_size, self.hidden_dim).zero_().cuda()),
+                      (weight.new(batch_size, self.hidden_dim).zero_().cuda(),
+                       weight.new(batch_size, self.hidden_dim).zero_().cuda()))
+        else:
+            hidden = ((weight.new(batch_size, self.hidden_dim).zero_(),
+                       weight.new(batch_size, self.hidden_dim).zero_()),
+                      (weight.new(batch_size, self.hidden_dim).zero_(),
+                       weight.new(batch_size, self.hidden_dim).zero_()))
+
+        return hidden
