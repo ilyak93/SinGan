@@ -17,6 +17,14 @@ if __name__ == '__main__':
     NoiseAmp = []
     dir2save = functions.generate_dir2save(opt)
 
+    real = functions.read_image(opt)
+    if real.shape[0] > 1:
+        functions.adjust_scales2image(real[0,:,:,:].unsqueeze(0), opt)
+    else:
+        functions.adjust_scales2image(real, opt)
+    train(opt, Gs, Zs, reals, NoiseAmp)
+    SinGAN_generate(Gs, Zs, reals, NoiseAmp, opt)
+
     if (os.path.exists(dir2save)):
         print('trained model already exist')
     else:
