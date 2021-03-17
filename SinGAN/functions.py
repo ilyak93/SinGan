@@ -286,7 +286,7 @@ def generate_dir2save(opt):
     dir2save = None
     print(opt)
     print('here')
-    sys.exit()
+    exit(0)
     print(opt.input_dir)
     
     if (opt.mode == 'train') | (opt.mode == 'SR_train'):
