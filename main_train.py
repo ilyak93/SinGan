@@ -22,8 +22,9 @@ if __name__ == '__main__':
         functions.adjust_scales2image(real[0,:,:,:].unsqueeze(0), opt)
     else:
         functions.adjust_scales2image(real, opt)
-    train(opt, Gs, Zs, reals, NoiseAmp)
-    SinGAN_generate(Gs, Zs, reals, NoiseAmp, opt)
+    with torch.backends.cudnn.flags(enabled=False):
+        train(opt, Gs, Zs, reals, NoiseAmp)
+        SinGAN_generate(Gs, Zs, reals, NoiseAmp, opt)
 
     if (os.path.exists(dir2save)):
         print('trained model already exist')
