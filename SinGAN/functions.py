@@ -284,6 +284,7 @@ def generate_in2coarsest(reals,scale_v,scale_h,opt):
 
 def generate_dir2save(opt):
     dir2save = None
+	print(opt.input_dir)
     if (opt.mode == 'train') | (opt.mode == 'SR_train'):
         dir2save = 'TrainedModels/%s/scale_factor=%f,alpha=%d' % (opt.input_name[:-4], opt.scale_factor_init,opt.alpha)
     elif (opt.mode == 'train_gif'):
