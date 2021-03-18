@@ -305,7 +305,7 @@ def draw_concat(Gs, Zs, reals, NoiseAmp, in_s, mode, m_noise, m_image, opt):
                     g_states = G.init_hidden(1)
                     G_z = G(z_in.detach(), G_z, g_states)
                 else:
-                    G_z = G(z_in.detach(), G_z)
+                    G_z, _ = G(z_in.detach(), G_z)
                 G_z = imresize(G_z, 1 / opt.scale_factor, opt)
                 G_z = G_z[:, :, 0:real_next.shape[2], 0:real_next.shape[3]]
                 count += 1
