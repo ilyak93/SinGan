@@ -71,7 +71,7 @@ def train(opt, Gs, Zs, reals, NoiseAmp):
 
         scale_num += 1
         nfc_prev = opt.nfc
-		print('nfc_prev=:')
+		print('nfc_prev:')
 		print(nfc_prev)
         del D_curr, G_curr
     return
@@ -165,7 +165,6 @@ def train_single_scale(netD, netG, reals, Gs, Zs, in_s, NoiseAmp, opt, centers=N
                     prev = m_image(prev)
                     z_prev = draw_concat(Gs, Zs, reals, NoiseAmp, in_s, 'rec', m_noise, m_image, opt)
                     criterion = nn.MSELoss()
-                    z_prev = m_noise(z_prev)
                     RMSE = torch.sqrt(criterion(real, z_prev))
                     opt.noise_amp = opt.noise_amp_init * RMSE
                     z_prev = m_image(z_prev)
