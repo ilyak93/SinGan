@@ -71,8 +71,8 @@ def train(opt, Gs, Zs, reals, NoiseAmp):
 
         scale_num += 1
         nfc_prev = opt.nfc
-		print('nfc_prev:')
-		print(nfc_prev)
+        print('nfc_prev:')
+        print(nfc_prev)
         del D_curr, G_curr
     return
 
