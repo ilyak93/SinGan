@@ -88,7 +88,7 @@ def train_single_scale(netD, netG, reals, Gs, Zs, in_s, NoiseAmp, opt, centers=N
         pad_noise = 0
     m_noise = nn.ZeroPad2d(int(pad_noise))
     m_image = nn.ZeroPad2d(int(pad_image))
-    #real = m_image(real)
+    real = m_image(real)
 
     alpha = opt.alpha
 
@@ -211,7 +211,7 @@ def train_single_scale(netD, netG, reals, Gs, Zs, in_s, NoiseAmp, opt, centers=N
 
                 output, _, _ = netD(fake, d_state)
             else :
-                output = output = netD(fake)
+                output = netD(fake)
             # D_fake_map = output.detach()
             errG = -output.mean()
             errG.backward(retain_graph=True)
