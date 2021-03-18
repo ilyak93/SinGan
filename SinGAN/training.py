@@ -45,6 +45,7 @@ def train(opt, Gs, Zs, reals, NoiseAmp):
             G_prev = torch.load('%s/%d/netG.pth' % (opt.out_, scale_num - 1))
             G_curr_params = G_curr.state_dict()
             filtered_G_prev = {k: v for k, v in G_prev.items() if k in G_curr_params and v.shape == G_curr_params[k].shape}
+			{print(k, v.shape) for k, v in G_prev.items() if k in G_curr_params and v.shape == G_curr_params[k].shape}
             G_curr_params.update(filtered_G_prev)
             G_curr.load_state_dict(G_curr_params)
             D_prev = torch.load('%s/%d/netD.pth' % (opt.out_, scale_num - 1))
