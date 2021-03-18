@@ -812,7 +812,7 @@ class CRnnDiscriminator(nn.Module):
         # params
         _, chns, ln, wd = opt.cur_real_shape
         self.num_feats = chns * (ln+10) * (wd+10)
-        self.hidden_dim = 256
+        self.hidden_dim = 128
         self.num_layers = 2
         self.use_cuda = torch.cuda.is_available()
 
@@ -879,7 +879,7 @@ class CRnnGenerator(nn.Module):
         self.use_cuda = torch.cuda.is_available()
         _, chns, ln, wd = opt.cur_real_shape
         self.num_feats = chns * (ln + 10) * (wd + 10)
-        self.hidden_dim = 256
+        self.hidden_dim = 128
         self.fc_layer1 = nn.Linear(in_features=(self.num_feats * 2), out_features=self.hidden_dim)
         self.lstm_cell1 = nn.LSTMCell(input_size=self.hidden_dim, hidden_size=self.hidden_dim)
         self.dropout = nn.Dropout(p=drop_prob)
