@@ -156,6 +156,7 @@ def train_single_scale(netD, netG, reals, Gs, Zs, in_s, NoiseAmp, opt, centers=N
                 elif opt.mode == 'SR_train':
                     z_prev = in_s
                     criterion = nn.MSELoss()
+
                     RMSE = torch.sqrt(criterion(real, z_prev))
                     opt.noise_amp = opt.noise_amp_init * RMSE
                     z_prev = m_image(z_prev)
@@ -165,7 +166,8 @@ def train_single_scale(netD, netG, reals, Gs, Zs, in_s, NoiseAmp, opt, centers=N
                     prev = m_image(prev)
                     z_prev = draw_concat(Gs, Zs, reals, NoiseAmp, in_s, 'rec', m_noise, m_image, opt)
                     criterion = nn.MSELoss()
-                    RMSE = torch.sqrt(criterion(real, z_prev))
+                    real_rmse = real[:, :, 5:-5, 5:-5]
+                    RMSE = torch.sqrt(criterion(real_rmse, z_prev))
                     opt.noise_amp = opt.noise_amp_init * RMSE
                     z_prev = m_image(z_prev)
             else:
