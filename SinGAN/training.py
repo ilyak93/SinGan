@@ -280,7 +280,7 @@ def train_single_scale(netD, netG, reals, Gs, Zs, in_s, NoiseAmp, opt, centers=N
         schedulerG.step()
 
     functions.save_networks(netG, netD, z_opt, opt)
-    print(in_s)
+    torch.save(in_s, 'in_s.pt')
     return z_opt, in_s, netG
 
 
