@@ -315,7 +315,11 @@ def draw_concat(Gs, Zs, reals, NoiseAmp, in_s, mode, m_noise, m_image, opt):
                 G_z = G_z[:, :, 0:real_curr.shape[2], 0:real_curr.shape[3]]
                 G_z = m_image(G_z)
                 z_in = noise_amp * Z_opt + G_z
-                G_z = G(z_in.detach(), G_z)
+                if opt.mode == 'train_gif':
+                    g_states = G.init_hidden(1)
+                    G_z, _ = G(z_in.detach(), G_z, g_states)
+                else:
+                    G_z = G(z_in.detach(), G_z)
                 G_z = imresize(G_z, 1 / opt.scale_factor, opt)
                 G_z = G_z[:, :, 0:real_next.shape[2], 0:real_next.shape[3]]
                 # if count != (len(Gs)-1):
