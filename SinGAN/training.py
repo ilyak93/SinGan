@@ -280,6 +280,7 @@ def train_single_scale(netD, netG, reals, Gs, Zs, in_s, NoiseAmp, opt, centers=N
         schedulerG.step()
 
     functions.save_networks(netG, netD, z_opt, opt)
+    print(in_s)
     return z_opt, in_s, netG
 
 
