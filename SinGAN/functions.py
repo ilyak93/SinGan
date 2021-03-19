@@ -1,3 +1,4 @@
+import numpy
 import torch
 import matplotlib.pyplot as plt
 import matplotlib.patches as patches
@@ -5,6 +6,8 @@ import numpy as np
 import torch.nn as nn
 import scipy.io as sio
 import math
+
+from PIL import Image
 from skimage import io as img
 from skimage import color, morphology, filters
 #from skimage import morphology
@@ -16,11 +19,10 @@ from sklearn.cluster import KMeans
 
 
 # custom weights initialization called on netG and netD
-'''
+
 def read_image(opt):
     x = img.imread('%s%s' % (opt.input_img,opt.ref_image))
     return np2torch(x)
-'''
 
 def denorm(x):
     out = (x + 1) / 2
@@ -150,7 +152,7 @@ def calc_gradient_penalty(netD, real_data, fake_data, LAMBDA, device, opt):
     interpolates = torch.autograd.Variable(interpolates, requires_grad=True)
 
     real_batch_sz = 1
-    if opt.mode == 'train_gif':
+    if opt.mode == 'train_gif_rnn':
         d_state = netD.init_hidden(real_batch_sz)
 
         disc_interpolates, _, _ = netD(interpolates, d_state)
@@ -166,6 +168,7 @@ def calc_gradient_penalty(netD, real_data, fake_data, LAMBDA, device, opt):
     return gradient_penalty
 
 def read_single_image(opt, path):
+
     x = img.imread(path)
     x = np2torch(x, opt)
     x = x[:, 0:3, :, :]
@@ -174,9 +177,10 @@ def read_single_image(opt, path):
 def read_image(opt):
     if opt.mode == 'train':
         return read_single_image(opt, '%s/%s' % (opt.input_dir, opt.input_name))
-    elif opt.mode == 'train_gif':
+    elif opt.mode == 'train_gif_rnn' or opt.mode == 'train_gif_clstm':
         images_name = sorted(os.listdir(opt.input_dir))
         images = read_single_image(opt, '%s/%s' % (opt.input_dir, images_name[0]))
+
         for img_name in images_name[1:]:
             x = read_single_image(opt, '%s/%s' % (opt.input_dir, img_name))
             images = torch.cat((images, x[:, 0:3, :, :]), 0)
@@ -284,10 +288,10 @@ def generate_in2coarsest(reals,scale_v,scale_h,opt):
     return in_s
 
 def generate_dir2save(opt):
-    #dir2save = None
+    dir2save = None
     if (opt.mode == 'train') | (opt.mode == 'SR_train'):
         dir2save = 'TrainedModels/%s/scale_factor=%f,alpha=%d' % (opt.input_name[:-4], opt.scale_factor_init,opt.alpha)
-    elif (opt.mode == 'train_gif'):
+    elif (opt.mode == 'train_gif_rnn' or opt.mode == 'train_gif_clstm'):
         dir2save = 'TrainedModels/%s/scale_factor=%f,alpha=%d' % (opt.input_dir[:-4], opt.scale_factor_init,opt.alpha)
     elif (opt.mode == 'animation_train') :
         dir2save = 'TrainedModels/%s/scale_factor=%f_noise_padding' % (opt.input_name[:-4], opt.scale_factor_init)

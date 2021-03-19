@@ -19,6 +19,12 @@ def train(opt, Gs, Zs, reals, NoiseAmp):
     reals = functions.creat_reals_pyramid(real, reals, opt)
     nfc_prev = 0
 
+    #path = 'TrainedModels/animation_input/scale_factor=0.750000,alpha=10'
+    #Gs = torch.load('%s/Gs.pth' % (path), map_location=torch.device('cpu'))
+    #Zs = torch.load('%s/Zs.pth' % (path), map_location=torch.device('cpu'))
+    #NoiseAmp = torch.load('%s/NoiseAmp.pth' % (path), map_location=torch.device('cpu'))
+    #in_s = torch.load('TrainedModels/animation_input/scale_factor=0.750000,alpha=10/in_s.pt', map_location=torch.device('cpu'))
+
     while scale_num < opt.stop_scale + 1:
         opt.attn = False
 
@@ -71,8 +77,6 @@ def train(opt, Gs, Zs, reals, NoiseAmp):
 
         scale_num += 1
         nfc_prev = opt.nfc
-        print('nfc_prev:')
-        print(nfc_prev)
         del D_curr, G_curr
     return
 
@@ -90,7 +94,7 @@ def train_single_scale(netD, netG, reals, Gs, Zs, in_s, NoiseAmp, opt, centers=N
         pad_noise = 0
     m_noise = nn.ZeroPad2d(int(pad_noise))
     m_image = nn.ZeroPad2d(int(pad_image))
-    real = m_image(real)
+    #real = m_image(real)
 
     alpha = opt.alpha
 
@@ -131,9 +135,8 @@ def train_single_scale(netD, netG, reals, Gs, Zs, in_s, NoiseAmp, opt, centers=N
             # train with real
             netD.zero_grad()
 
-            if opt.mode == 'train_gif':
+            if opt.mode == 'train_gif_rnn':
                 d_state = netD.init_hidden(real_batch_sz)
-
                 output, _, _ = netD(real, d_state)
                 output = output.to(opt.device)
             else :
@@ -156,7 +159,6 @@ def train_single_scale(netD, netG, reals, Gs, Zs, in_s, NoiseAmp, opt, centers=N
                 elif opt.mode == 'SR_train':
                     z_prev = in_s
                     criterion = nn.MSELoss()
-
                     RMSE = torch.sqrt(criterion(real, z_prev))
                     opt.noise_amp = opt.noise_amp_init * RMSE
                     z_prev = m_image(z_prev)
@@ -166,8 +168,15 @@ def train_single_scale(netD, netG, reals, Gs, Zs, in_s, NoiseAmp, opt, centers=N
                     prev = m_image(prev)
                     z_prev = draw_concat(Gs, Zs, reals, NoiseAmp, in_s, 'rec', m_noise, m_image, opt)
                     criterion = nn.MSELoss()
-                    real_rmse = real[:, :, 5:-5, 5:-5]
-                    RMSE = torch.sqrt(criterion(real_rmse, z_prev))
+                    #plt.imshow(real.permute([0, 2, 3, 1])[0])
+                    #plt.show()
+                    #real_rmse = real[:, :, 5:-5, 5:-5]
+                    #plt.imshow(real_rmse.permute([0,2,3,1])[0])
+                    #plt.show()
+                    #plt.imshow(z_prev.permute([0, 2, 3, 1])[0])
+                    #plt.show()
+                    #RMSE = torch.sqrt(criterion(real_rmse, z_prev))
+                    RMSE = torch.sqrt(criterion(real, z_prev))
                     opt.noise_amp = opt.noise_amp_init * RMSE
                     z_prev = m_image(z_prev)
             else:
@@ -183,7 +192,7 @@ def train_single_scale(netD, netG, reals, Gs, Zs, in_s, NoiseAmp, opt, centers=N
             else:
                 noise = opt.noise_amp * noise_ + prev
 
-            if opt.mode == 'train_gif':
+            if opt.mode == 'train_gif_rnn':
                 g_states = netG.init_hidden(real_batch_sz)
                 d_state = netD.init_hidden(real_batch_sz)
                 fake, _ = netG(noise.detach(), prev, g_states)
@@ -210,7 +219,7 @@ def train_single_scale(netD, netG, reals, Gs, Zs, in_s, NoiseAmp, opt, centers=N
 
         for j in range(opt.Gsteps):
             netG.zero_grad()
-            if opt.mode == 'train_gif':
+            if opt.mode == 'train_gif_rnn':
                 d_state = netD.init_hidden(real_batch_sz)
 
                 output, _, _ = netD(fake, d_state)
@@ -225,8 +234,11 @@ def train_single_scale(netD, netG, reals, Gs, Zs, in_s, NoiseAmp, opt, centers=N
                     z_prev = functions.quant2centers(z_prev, centers)
                     plt.imsave('%s/z_prev.png' % (opt.outf), functions.convert_image_np(z_prev), vmin=0, vmax=1)
                 Z_opt = opt.noise_amp * z_opt + z_prev
-                g_states = netG.init_hidden(real_batch_sz)
-                fake, _ = netG(Z_opt.detach(), z_prev, g_states)
+                if opt.mode == 'train_gif_rnn':
+                    g_states = netG.init_hidden(real_batch_sz)
+                    fake, _ = netG(Z_opt.detach(), z_prev, g_states)
+                else:
+                    fake = netG(Z_opt.detach(), z_prev)
                 rec_loss = alpha * loss(fake, real)
                 rec_loss.backward(retain_graph=True)
                 rec_loss = rec_loss.detach()
@@ -234,7 +246,7 @@ def train_single_scale(netD, netG, reals, Gs, Zs, in_s, NoiseAmp, opt, centers=N
                 Z_opt = z_opt
                 rec_loss = 0
             optimizerG.step()
-            if opt.mode == 'train_gif':
+            if opt.mode == 'train_gif_rnn':
                 g_states = netG.init_hidden(real_batch_sz)
                 fake, _ = netG(noise.detach(), prev, g_states)
             else:
@@ -253,8 +265,11 @@ def train_single_scale(netD, netG, reals, Gs, Zs, in_s, NoiseAmp, opt, centers=N
         if epoch % 500 == 0 or epoch == (opt.niter - 1):
             functions.im_save('fake_sample', opt.outf, fake.detach(), vmin=0, vmax=1)
             #plt.imsave('%s/fake_sample.png' % (opt.outf), functions.convert_image_np(fake.detach()), vmin=0, vmax=1)
-            g_states = netG.init_hidden(real_batch_sz)
-            G_opt, _ = netG(Z_opt.detach(), z_prev, g_states)
+            if opt.mode == 'train_gif_rnn':
+                g_states = netG.init_hidden(real_batch_sz)
+                G_opt, _ = netG(Z_opt.detach(), z_prev, g_states)
+            else:
+                G_opt = netG(Z_opt.detach(), z_prev)
             G_opt = G_opt.detach()
             functions.im_save('G(z_opt)', opt.outf, G_opt, vmin=0, vmax=1)
             #plt.imsave('%s/G(z_opt).png' % (opt.outf),
@@ -282,7 +297,6 @@ def train_single_scale(netD, netG, reals, Gs, Zs, in_s, NoiseAmp, opt, centers=N
         schedulerG.step()
 
     functions.save_networks(netG, netD, z_opt, opt)
-    torch.save(in_s, 'in_s.pt')
     return z_opt, in_s, netG
 
 
@@ -295,32 +309,34 @@ def draw_concat(Gs, Zs, reals, NoiseAmp, in_s, mode, m_noise, m_image, opt):
             if opt.mode == 'animation_train':
                 pad_noise = 0
             for G, Z_opt, real_curr, real_next, noise_amp in zip(Gs, Zs, reals, reals[1:], NoiseAmp):
+                G.use_cuda = False
                 if count == 0:
-                    z = functions.generate_noise([1, Z_opt.shape[2] - 2 * pad_noise, Z_opt.shape[3] - 2 * pad_noise], 
-                    real_curr.shape[0], device=opt.device)
+                    z = functions.generate_noise([1, Z_opt.shape[2] - 2 * pad_noise, Z_opt.shape[3] - 2 * pad_noise],
+                                                 real_curr.shape[0], device = opt.device)
                     z = z.expand(real_curr.shape[0], 3, z.shape[2], z.shape[3])
                 else:
                     z = functions.generate_noise(
-                        [opt.nc_z, Z_opt.shape[2] - 2 * pad_noise, Z_opt.shape[3] - 2 * pad_noise], real_curr.shape[0], device=opt.device)
+                        [opt.nc_z, Z_opt.shape[2] - 2 * pad_noise, Z_opt.shape[3] - 2 * pad_noise], real_curr.shape[0],
+                        device=opt.device)
                 z = m_noise(z)
                 G_z = G_z[:, :, 0:real_curr.shape[2], 0:real_curr.shape[3]]
                 G_z = m_image(G_z)
                 z_in = noise_amp * z + G_z
-                if opt.mode == 'train_gif':
+                if opt.mode == 'train_gif_rnn':
                     g_states = G.init_hidden(1)
                     G_z, _ = G(z_in.detach(), G_z, g_states)
                 else:
                     G_z = G(z_in.detach(), G_z)
-                G_z = imresize(G_z, 1 / opt.scale_factor, opt)
-                G_z = G_z[:, :, 0:real_next.shape[2], 0:real_next.shape[3]]
-                count += 1
+            G_z = imresize(G_z, 1 / opt.scale_factor, opt)
+            G_z = G_z[:, :, 0:real_next.shape[2], 0:real_next.shape[3]]
+            count += 1
         if mode == 'rec':
             count = 0
             for G, Z_opt, real_curr, real_next, noise_amp in zip(Gs, Zs, reals, reals[1:], NoiseAmp):
                 G_z = G_z[:, :, 0:real_curr.shape[2], 0:real_curr.shape[3]]
                 G_z = m_image(G_z)
                 z_in = noise_amp * Z_opt + G_z
-                if opt.mode == 'train_gif':
+                if opt.mode == 'train_gif_rnn':
                     g_states = G.init_hidden(1)
                     G_z, _ = G(z_in.detach(), G_z, g_states)
                 else:
@@ -385,7 +401,7 @@ def train_paint(opt, Gs, Zs, reals, NoiseAmp, centers, paint_inject_scale):
 
 def init_models(opt):
     # generator initialization:
-    netG = models.CRnnGenerator(opt).to(opt.device)
+    netG = models.ConvLSTMGenerator1(opt).to(opt.device)
     total_params = sum(p.numel() for p in netG.parameters())
     train_params = sum(p.numel() for p in netG.parameters() if p.requires_grad)
     print(f'number of parameters of generator: total={total_params} train={train_params}')
@@ -395,7 +411,7 @@ def init_models(opt):
     print(netG)
 
     # discriminator initialization:
-    netD = models.CRnnDiscriminator(opt).to(opt.device)
+    netD = models.ConvLSTMDiscriminator1(opt).to(opt.device)
     total_params = sum(p.numel() for p in netD.parameters())
     train_params = sum(p.numel() for p in netD.parameters() if p.requires_grad)
     print(f'number of parameters of generator: total={total_params} train={train_params}')
