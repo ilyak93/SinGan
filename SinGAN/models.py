@@ -1166,7 +1166,7 @@ class ConvLSTMDiscriminator1(nn.Module):
                             num_layers=self.num_layers, kernel_size=(3,3),
                              batch_first=True)
 
-        self.tail = nn.Conv2d(max(hidden[-1],opt.min_nfc),1,kernel_size=opt.ker_size,stride=1,padding=opt.padd_size)
+        self.tail = nn.Conv2d(max(N,opt.min_nfc),1,kernel_size=opt.ker_size,stride=1,padding=opt.padd_size)
 
     def forward(self, x):
         ''' Forward prop
