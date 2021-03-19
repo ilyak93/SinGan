@@ -1162,7 +1162,7 @@ class ConvLSTMDiscriminator1(nn.Module):
         #hidden = [max(int(opt.nfc/pow(2,(i+1))), opt.min_nfc) for i in range(opt.num_layer-2)]
 
 
-        self.lstm = ConvLSTM(input_dim=N_lstm, hidden_dim=[128],
+        self.lstm = ConvLSTM(input_dim=N_lstm, hidden_dim=[N_lstm],
                             num_layers=self.num_layers, kernel_size=(3,3),
                              batch_first=True)
 
@@ -1200,7 +1200,7 @@ class ConvLSTMGenerator1(nn.Module):
 
         #hidden = [max(int(opt.nfc / pow(2, (i + 1))), opt.min_nfc) for i in range(opt.num_layer - 2)]
 
-        self.lstm = ConvLSTM(input_dim=N_lstm, hidden_dim=[128],
+        self.lstm = ConvLSTM(input_dim=N_lstm, hidden_dim=[N_lstm],
                              num_layers=self.num_layers, kernel_size=(3, 3),
                              batch_first=True)
 
