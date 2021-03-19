@@ -292,7 +292,7 @@ def train_single_scale(netD, netG, reals, Gs, Zs, in_s, NoiseAmp, opt, centers=N
             print('Discriminator fake loss:')
             plt.plot(list(range(0, len(D_fake2plot))), D_fake2plot)
             plt.show()
-			print('Reconstruction loss:')
+            print('Reconstruction loss:')
             plt.plot(list(range(0, len(errG2recplot))), errG2recplot)
             plt.show()
 
