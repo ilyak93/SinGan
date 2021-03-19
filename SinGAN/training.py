@@ -14,18 +14,16 @@ def train(opt, Gs, Zs, reals, NoiseAmp):
 
     real_ = functions.read_image(opt)
     in_s = 0
-    scale_num = 4
+    scale_num = 0
     real = imresize(real_, opt.scale1, opt)
     reals = functions.creat_reals_pyramid(real, reals, opt)
-    nfc_prev = 32
+    nfc_prev = 0
 
-    path = 'TrainedModels/animation_input/scale_factor=0.750000,alpha=10'
-    Gs = torch.load('%s/Gs.pth' % (path))
-    print('here')
-    print(len(Gs))
-    Zs = torch.load('%s/Zs.pth' % (path))
-    NoiseAmp = torch.load('%s/NoiseAmp.pth' % (path))
-    in_s = torch.load('TrainedModels/animation_input/scale_factor=0.750000,alpha=10/in_s.pt')
+    #path = 'TrainedModels/animation_input/scale_factor=0.750000,alpha=10'
+    #Gs = torch.load('%s/Gs.pth' % (path))
+    #Zs = torch.load('%s/Zs.pth' % (path))
+    #NoiseAmp = torch.load('%s/NoiseAmp.pth' % (path))
+    #in_s = torch.load('TrainedModels/animation_input/scale_factor=0.750000,alpha=10/in_s.pt')
 
     while scale_num < opt.stop_scale + 1:
         opt.attn = False
@@ -88,8 +86,8 @@ def train_single_scale(netD, netG, reals, Gs, Zs, in_s, NoiseAmp, opt, centers=N
     opt.nzx = real.shape[2]  # +(opt.ker_size-1)*(opt.num_layer)
     opt.nzy = real.shape[3]  # +(opt.ker_size-1)*(opt.num_layer)
     opt.receptive_field = opt.ker_size + ((opt.ker_size - 1) * (opt.num_layer - 1)) * opt.stride
-    pad_noise = int(((opt.ker_size - 1) * opt.num_layer) / 2)
-    pad_image = int(((opt.ker_size - 1) * opt.num_layer) / 2)
+    pad_noise = int(((opt.ker_size - 1) * 2) / 2)
+    pad_image = int(((opt.ker_size - 1) * 2) / 2)
     if opt.mode == 'animation_train':
         opt.nzx = real.shape[2] + (opt.ker_size - 1) * (opt.num_layer)
         opt.nzy = real.shape[3] + (opt.ker_size - 1) * (opt.num_layer)
@@ -406,7 +404,7 @@ def train_paint(opt, Gs, Zs, reals, NoiseAmp, centers, paint_inject_scale):
 
 def init_models(opt):
     # generator initialization:
-    netG = models.ConvLSTMGenerator1(opt).to(opt.device)
+    netG = models.ConvLSTMGenerator2(opt).to(opt.device)
     total_params = sum(p.numel() for p in netG.parameters())
     train_params = sum(p.numel() for p in netG.parameters() if p.requires_grad)
     print(f'number of parameters of generator: total={total_params} train={train_params}')
@@ -416,7 +414,7 @@ def init_models(opt):
     print(netG)
 
     # discriminator initialization:
-    netD = models.ConvLSTMDiscriminator1(opt).to(opt.device)
+    netD = models.ConvLSTMDiscriminator2(opt).to(opt.device)
     total_params = sum(p.numel() for p in netD.parameters())
     train_params = sum(p.numel() for p in netD.parameters() if p.requires_grad)
     print(f'number of parameters of generator: total={total_params} train={train_params}')

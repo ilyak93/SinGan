@@ -1218,3 +1218,70 @@ class ConvLSTMGenerator1(nn.Module):
         ind = int((y.shape[2] - x.shape[2]) / 2)
         y = y[:, :, ind:(y.shape[2] - ind), ind:(y.shape[3] - ind)]
         return x + y
+        
+        
+        
+
+
+class ConvLSTMDiscriminator2(nn.Module):
+    ''' C-RNN-GAN discrminator
+    '''
+
+    def __init__(self, opt):
+        super(ConvLSTMDiscriminator2, self).__init__()
+
+        # params
+        self.use_cuda = torch.cuda.is_available()
+        N = int(opt.nfc)
+        self.head = ConvBlock(opt.nc_im, N, opt.ker_size, opt.padd_size, 1)
+
+        hidden = [max(int(opt.nfc/pow(2,(i+1))), opt.min_nfc) for i in range(opt.num_layer-2)]
+        self.num_layers = len(hidden)
+        self.lstm = ConvLSTM(input_dim=N, hidden_dim=hidden,
+                             num_layers=self.num_layers, kernel_size=(3, 3),
+                             batch_first=True)
+
+        self.tail = nn.Conv2d(hidden[-1], 1, kernel_size=opt.ker_size, stride=1, padding=opt.padd_size)
+
+    def forward(self, x):
+        ''' Forward prop
+        '''
+        x = self.head(x).unsqueeze(0)
+        x = self.lstm(x, None)[0][0].squeeze()
+        x = self.tail(x)
+
+        return x
+
+
+class ConvLSTMGenerator2(nn.Module):
+    ''' C-RNN-GAN generator
+    '''
+
+    def __init__(self, opt, hidden_units=256, drop_prob=0.6, use_cuda=False):
+        super(ConvLSTMGenerator2, self).__init__()
+
+        # params
+
+        self.use_cuda = torch.cuda.is_available()
+
+        N = int(opt.nfc)
+        self.head = ConvBlock(opt.nc_im, N, opt.ker_size, opt.padd_size, 1)
+
+        hidden = [max(int(opt.nfc / pow(2, (i + 1))), opt.min_nfc) for i in range(opt.num_layer - 2)]
+        self.num_layers = len(hidden)
+        self.lstm = ConvLSTM(input_dim=N, hidden_dim=hidden,
+                             num_layers=self.num_layers, kernel_size=(3, 3),
+                             batch_first=True)
+        self.tail = nn.Sequential(
+            nn.Conv2d(hidden[-1], opt.nc_im, kernel_size=opt.ker_size, stride=1, padding=opt.padd_size),
+            nn.Tanh()
+        )
+
+
+    def forward(self, x, y):
+        x = self.head(x).unsqueeze(0)
+        x = self.lstm(x, None)[0][0].squeeze()
+        x = self.tail(x)
+        ind = int((y.shape[2] - x.shape[2]) / 2)
+        y = y[:, :, ind:(y.shape[2] - ind), ind:(y.shape[3] - ind)]
+        return x + y
