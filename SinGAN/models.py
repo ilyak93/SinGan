@@ -1147,7 +1147,7 @@ class ConvLSTMDiscriminator1(nn.Module):
         super(ConvLSTMDiscriminator1, self).__init__()
 
         # params
-        self.num_layers = 3
+        self.num_layers = 1
         self.use_cuda = torch.cuda.is_available()
 
         N = int(opt.nfc)
@@ -1159,10 +1159,10 @@ class ConvLSTMDiscriminator1(nn.Module):
             block = ConvBlock(max(2 * N, opt.min_nfc), max(N, opt.min_nfc), opt.ker_size, opt.padd_size, 1)
             self.body.add_module('block%d' % (i + 1), block)
 
-        hidden = [max(int(opt.nfc/pow(2,(i+1))), opt.min_nfc) for i in range(opt.num_layer-2)]
+        #hidden = [max(int(opt.nfc/pow(2,(i+1))), opt.min_nfc) for i in range(opt.num_layer-2)]
 
 
-        self.lstm = ConvLSTM(input_dim=N_lstm, hidden_dim=hidden,
+        self.lstm = ConvLSTM(input_dim=N_lstm, hidden_dim=[128],
                             num_layers=self.num_layers, kernel_size=(3,3),
                              batch_first=True)
 
@@ -1186,7 +1186,7 @@ class ConvLSTMGenerator1(nn.Module):
         super(ConvLSTMGenerator1, self).__init__()
 
         # params
-        self.num_layers = 3
+        self.num_layers = 1
         self.use_cuda = torch.cuda.is_available()
 
         N = int(opt.nfc)
@@ -1198,9 +1198,9 @@ class ConvLSTMGenerator1(nn.Module):
             block = ConvBlock(max(2 * N, opt.min_nfc), max(N, opt.min_nfc), opt.ker_size, opt.padd_size, 1)
             self.body.add_module('block%d' % (i + 1), block)
 
-        hidden = [max(int(opt.nfc / pow(2, (i + 1))), opt.min_nfc) for i in range(opt.num_layer - 2)]
+        #hidden = [max(int(opt.nfc / pow(2, (i + 1))), opt.min_nfc) for i in range(opt.num_layer - 2)]
 
-        self.lstm = ConvLSTM(input_dim=N_lstm, hidden_dim=hidden,
+        self.lstm = ConvLSTM(input_dim=N_lstm, hidden_dim=[128],
                              num_layers=self.num_layers, kernel_size=(3, 3),
                              batch_first=True)
 
