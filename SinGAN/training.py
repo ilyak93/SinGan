@@ -14,16 +14,18 @@ def train(opt, Gs, Zs, reals, NoiseAmp):
 
     real_ = functions.read_image(opt)
     in_s = 0
-    scale_num = 0
+    scale_num = 4
     real = imresize(real_, opt.scale1, opt)
     reals = functions.creat_reals_pyramid(real, reals, opt)
-    nfc_prev = 0
+    nfc_prev = 32
 
-    #path = 'TrainedModels/animation_input/scale_factor=0.750000,alpha=10'
-    #Gs = torch.load('%s/Gs.pth' % (path), map_location=torch.device('cpu'))
-    #Zs = torch.load('%s/Zs.pth' % (path), map_location=torch.device('cpu'))
-    #NoiseAmp = torch.load('%s/NoiseAmp.pth' % (path), map_location=torch.device('cpu'))
-    #in_s = torch.load('TrainedModels/animation_input/scale_factor=0.750000,alpha=10/in_s.pt', map_location=torch.device('cpu'))
+    path = 'TrainedModels/animation_input/scale_factor=0.750000,alpha=10'
+    Gs = torch.load('%s/Gs.pth' % (path))
+    print('here')
+    print(len(Gs))
+    Zs = torch.load('%s/Zs.pth' % (path))
+    NoiseAmp = torch.load('%s/NoiseAmp.pth' % (path))
+    in_s = torch.load('TrainedModels/animation_input/scale_factor=0.750000,alpha=10/in_s.pt')
 
     while scale_num < opt.stop_scale + 1:
         opt.attn = False
