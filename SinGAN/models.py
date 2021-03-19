@@ -1285,3 +1285,68 @@ class ConvLSTMGenerator2(nn.Module):
         ind = int((y.shape[2] - x.shape[2]) / 2)
         y = y[:, :, ind:(y.shape[2] - ind), ind:(y.shape[3] - ind)]
         return x + y
+        
+        
+class ConvLSTMDiscriminator3(nn.Module):
+    ''' C-RNN-GAN discrminator
+    '''
+
+    def __init__(self, opt):
+        super(ConvLSTMDiscriminator3, self).__init__()
+
+        # params
+        self.num_layers = 1
+        self.use_cuda = torch.cuda.is_available()
+
+        #N = int(opt.nfc)
+        N = 8
+        self.head = ConvBlock(opt.nc_im, N, opt.ker_size, opt.padd_size, 1)
+
+        self.lstm = ConvLSTM(input_dim=N, hidden_dim=[N],
+                             num_layers=self.num_layers, kernel_size=(3, 3),
+                             batch_first=True)
+
+
+        self.tail = nn.Conv2d(N, 1, kernel_size=opt.ker_size, stride=1, padding=opt.padd_size)
+
+    def forward(self, x):
+        ''' Forward prop
+        '''
+        x = self.head(x).unsqueeze(0)
+        x = self.lstm(x, None)[0][0].squeeze()
+        x = self.tail(x)
+
+        return x
+
+
+class ConvLSTMGenerator3(nn.Module):
+    ''' C-RNN-GAN generator
+    '''
+
+    def __init__(self, opt, hidden_units=256, drop_prob=0.6, use_cuda=False):
+        super(ConvLSTMGenerator3, self).__init__()
+
+        # params
+        self.num_layers = 1
+        self.use_cuda = torch.cuda.is_available()
+
+        N = 8
+        self.head = ConvBlock(opt.nc_im, N, opt.ker_size, opt.padd_size, 1)
+
+        self.lstm = ConvLSTM(input_dim=N, hidden_dim=[N],
+                             num_layers=self.num_layers, kernel_size=(3, 3),
+                             batch_first=True)
+
+
+        self.tail = nn.Sequential(
+            nn.Conv2d(N, opt.nc_im, kernel_size=opt.ker_size, stride=1, padding=opt.padd_size),
+            nn.Tanh()
+        )
+
+    def forward(self, x, y):
+        x = self.head(x).unsqueeze(0)
+        x = self.lstm(x, None)[0][0].squeeze()
+        x = self.tail(x)
+        ind = int((y.shape[2] - x.shape[2]) / 2)
+        y = y[:, :, ind:(y.shape[2] - ind), ind:(y.shape[3] - ind)]
+        return x + y
