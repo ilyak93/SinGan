@@ -327,9 +327,9 @@ def draw_concat(Gs, Zs, reals, NoiseAmp, in_s, mode, m_noise, m_image, opt):
                     G_z, _ = G(z_in.detach(), G_z, g_states)
                 else:
                     G_z = G(z_in.detach(), G_z)
-            G_z = imresize(G_z, 1 / opt.scale_factor, opt)
-            G_z = G_z[:, :, 0:real_next.shape[2], 0:real_next.shape[3]]
-            count += 1
+                G_z = imresize(G_z, 1 / opt.scale_factor, opt)
+                G_z = G_z[:, :, 0:real_next.shape[2], 0:real_next.shape[3]]
+                count += 1
         if mode == 'rec':
             count = 0
             for G, Z_opt, real_curr, real_next, noise_amp in zip(Gs, Zs, reals, reals[1:], NoiseAmp):
@@ -341,11 +341,11 @@ def draw_concat(Gs, Zs, reals, NoiseAmp, in_s, mode, m_noise, m_image, opt):
                     G_z, _ = G(z_in.detach(), G_z, g_states)
                 else:
                     G_z = G(z_in.detach(), G_z)
-                G_z = imresize(G_z, 1 / opt.scale_factor, opt)
-                G_z = G_z[:, :, 0:real_next.shape[2], 0:real_next.shape[3]]
-                # if count != (len(Gs)-1):
-                #    G_z = m_image(G_z)
-                count += 1
+                    G_z = imresize(G_z, 1 / opt.scale_factor, opt)
+                    G_z = G_z[:, :, 0:real_next.shape[2], 0:real_next.shape[3]]
+                    # if count != (len(Gs)-1):
+                    #    G_z = m_image(G_z)
+                    count += 1
     return G_z
 
 
