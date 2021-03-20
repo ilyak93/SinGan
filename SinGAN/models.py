@@ -1360,7 +1360,7 @@ class ConvLSTMGenerator4(nn.Module):
     '''
 
     def __init__(self, opt, hidden_units=256, drop_prob=0.6, use_cuda=False):
-        super(ConvLSTMGenerator3, self).__init__()
+        super(ConvLSTMGenerator4, self).__init__()
 
         # params
         self.num_layers = 1
