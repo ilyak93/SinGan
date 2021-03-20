@@ -86,8 +86,8 @@ def train_single_scale(netD, netG, reals, Gs, Zs, in_s, NoiseAmp, opt, centers=N
     opt.nzx = real.shape[2]  # +(opt.ker_size-1)*(opt.num_layer)
     opt.nzy = real.shape[3]  # +(opt.ker_size-1)*(opt.num_layer)
     opt.receptive_field = opt.ker_size + ((opt.ker_size - 1) * (opt.num_layer - 1)) * opt.stride
-    pad_noise = int(((opt.ker_size - 1) * 2) / 2)
-    pad_image = int(((opt.ker_size - 1) * 2) / 2)
+    pad_noise = int(((opt.ker_size - 1) * self.num_layer) / 2)
+    pad_image = int(((opt.ker_size - 1) * self.num_layer) / 2)
     if opt.mode == 'animation_train':
         opt.nzx = real.shape[2] + (opt.ker_size - 1) * (opt.num_layer)
         opt.nzy = real.shape[3] + (opt.ker_size - 1) * (opt.num_layer)
