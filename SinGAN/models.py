@@ -1350,3 +1350,44 @@ class ConvLSTMGenerator3(nn.Module):
         ind = int((y.shape[2] - x.shape[2]) / 2)
         y = y[:, :, ind:(y.shape[2] - ind), ind:(y.shape[3] - ind)]
         return x + y
+        
+        
+        
+
+
+class ConvLSTMGenerator4(nn.Module):
+    ''' C-RNN-GAN generator
+    '''
+
+    def __init__(self, opt, hidden_units=256, drop_prob=0.6, use_cuda=False):
+        super(ConvLSTMGenerator3, self).__init__()
+
+        # params
+        self.num_layers = 1
+        self.use_cuda = torch.cuda.is_available()
+
+        self.lstm = ConvLSTM(input_dim=opt.nc_im, hidden_dim=[opt.nc_im],
+                             num_layers=self.num_layers, kernel_size=(3, 3),
+                             batch_first=True)
+
+        N = opt.nfc
+        self.head = ConvBlock(opt.nc_im, N, opt.ker_size, opt.padd_size,
+                              1)  # GenConvTransBlock(opt.nc_z,N,opt.ker_size,opt.padd_size,opt.stride)
+        self.body = nn.Sequential()
+        for i in range(opt.num_layer - 2):
+            N = int(opt.nfc / pow(2, (i + 1)))
+            block = ConvBlock(max(2 * N, opt.min_nfc), max(N, opt.min_nfc), opt.ker_size, opt.padd_size, 1)
+            self.body.add_module('block%d' % (i + 1), block)
+        self.tail = nn.Sequential(
+            nn.Conv2d(max(N, opt.min_nfc), opt.nc_im, kernel_size=opt.ker_size, stride=1, padding=opt.padd_size),
+            nn.Tanh()
+        )
+
+    def forward(self, x, y):
+        x = self.lstm(x.unsqueeze(0), None)[0][0].squeeze()
+        x = self.head(x)
+        x = self.body(x)
+        x = self.tail(x)
+        ind = int((y.shape[2] - x.shape[2]) / 2)
+        y = y[:, :, ind:(y.shape[2] - ind), ind:(y.shape[3] - ind)]
+        return x + y
