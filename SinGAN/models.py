@@ -1433,3 +1433,76 @@ class ConvLSTMGenerator5(nn.Module):
         ind = int((y.shape[2] - x.shape[2]) / 2)
         y = y[:, :, ind:(y.shape[2] - ind), ind:(y.shape[3] - ind)]
         return x + y
+
+
+class ConvLSTMGenerator6(nn.Module):
+    ''' C-RNN-GAN generator
+    '''
+
+    def __init__(self, opt, seq_len=15, hidden_units=256, drop_prob=0.6, use_cuda=False):
+        super(ConvLSTMGenerator5, self).__init__()
+
+        # params
+        self.num_layers = 1
+        self.use_cuda = torch.cuda.is_available()
+        self.seq_len = 15
+
+        N = opt.nfc
+        self.head = ConvBlock(opt.nc_im, N, opt.ker_size, opt.padd_size,
+                              1)  # GenConvTransBlock(opt.nc_z,N,opt.ker_size,opt.padd_size,opt.stride)
+        self.body = nn.Sequential()
+        for i in range(opt.num_layer - 2):
+            N = int(opt.nfc / pow(2, (i + 1)))
+            block = ConvBlock(max(2 * N, opt.min_nfc), max(N, opt.min_nfc), opt.ker_size, opt.padd_size, 1)
+            self.body.add_module('block%d' % (i + 1), block)
+
+        self.tail = nn.Sequential(
+            nn.Conv2d(max(N, opt.min_nfc), opt.nc_im, kernel_size=opt.ker_size, stride=1, padding=opt.padd_size),
+            nn.Tanh()
+        )
+
+        hidden = [opt.nc_im for _ in range(seq_len)]
+        cell_list = []
+        for i in range(seq_len):
+            cur_input_dim = hidden[i]
+
+            cell_list.append(ConvLSTMCell(input_dim=cur_input_dim,
+                                          hidden_dim=hidden[i],
+                                          kernel_size=(opt.ker_size, opt.ker_size),
+                                          bias=True))
+
+        self.cell_list = nn.ModuleList(cell_list)
+
+
+        self.lstm = ConvLSTM(input_dim=opt.nc_im, hidden_dim=hidden,
+                             num_layers=seq_len, kernel_size=(3, 3),
+                             batch_first=True, return_all_layers=True)
+
+    def forward(self, x, y):
+        x = self.head(x[0,:,:,:].unsqueeze(0))
+        x = self.body(x)
+        x = self.tail(x)
+
+        b, _, _, h, w = x.unsqueeze(0).size()
+        hidden_state = self._init_hidden(batch_size=b, image_size=(h, w), num_of_hiddens=1)
+        cur_layer_input = x
+        h, c = hidden_state[0]
+        output_inner, layer_output_list = [], []
+        for t in range(self.seq_len):
+            h, c = self.cell_list[t](input_tensor=cur_layer_input,
+                                                cur_state=[h, c])
+            output_inner.append(h)
+            cur_layer_input = h
+
+        result = torch.stack(output_inner, dim=0).permute([1,0,2,3,4])
+
+        x = result.squeeze()
+        ind = int((y.shape[2] - x.shape[2]) / 2)
+        y = y[:, :, ind:(y.shape[2] - ind), ind:(y.shape[3] - ind)]
+        return x + y
+
+    def _init_hidden(self, batch_size, image_size, num_of_hiddens):
+        init_states = []
+        for i in range(num_of_hiddens):
+            init_states.append(self.cell_list[i].init_hidden(batch_size, image_size))
+        return init_states
