@@ -308,8 +308,8 @@ def draw_concat(Gs, Zs, reals, NoiseAmp, in_s, mode, m_noise, m_image, opt):
     if len(Gs) > 0:
         if mode == 'rand':
             count = 0
-            #pad_noise = int(((opt.ker_size - 1) * opt.num_layer) / 2)
-            pad_noise = int(((opt.ker_size - 1) * 2) / 2)
+            pad_noise = int(((opt.ker_size - 1) * opt.num_layer) / 2)
+            #pad_noise = int(((opt.ker_size - 1) * 2) / 2)
             if opt.mode == 'animation_train':
                 pad_noise = 0
             for G, Z_opt, real_curr, real_next, noise_amp in zip(Gs, Zs, reals, reals[1:], NoiseAmp):
