@@ -1440,7 +1440,7 @@ class ConvLSTMGenerator6(nn.Module):
     '''
 
     def __init__(self, opt, seq_len=15, hidden_units=256, drop_prob=0.6, use_cuda=False):
-        super(ConvLSTMGenerator5, self).__init__()
+        super(ConvLSTMGenerator6, self).__init__()
 
         # params
         self.num_layers = 1
@@ -1472,11 +1472,6 @@ class ConvLSTMGenerator6(nn.Module):
                                           bias=True))
 
         self.cell_list = nn.ModuleList(cell_list)
-
-
-        self.lstm = ConvLSTM(input_dim=opt.nc_im, hidden_dim=hidden,
-                             num_layers=seq_len, kernel_size=(3, 3),
-                             batch_first=True, return_all_layers=True)
 
     def forward(self, x, y):
         x = self.head(x[0,:,:,:].unsqueeze(0))
