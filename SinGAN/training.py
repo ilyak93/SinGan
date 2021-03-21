@@ -26,7 +26,6 @@ def train(opt, Gs, Zs, reals, NoiseAmp):
     #in_s = torch.load('TrainedModels/animation_input/scale_factor=0.750000,alpha=10/in_s.pt')
 
     while scale_num < opt.stop_scale + 1:
-        opt.attn = False
 
         opt.nfc = min(opt.nfc_init * pow(2, math.floor(scale_num / 4)), 128)
         opt.min_nfc = min(opt.min_nfc_init * pow(2, math.floor(scale_num / 4)), 128)
@@ -43,8 +42,6 @@ def train(opt, Gs, Zs, reals, NoiseAmp):
         functions.im_save('real_scale', opt.outf, reals[scale_num], vmin=0, vmax=1)
         #plt.imsave('%s/real_scale.png' % (opt.outf), functions.convert_image_np(reals[scale_num]), vmin=0, vmax=1)
         torch.cuda.empty_cache()  # added to try to save memory
-        if scale_num >= 0:
-            opt.attn = True
         opt.cur_real_shape = reals[len(Gs)].shape
         D_curr, G_curr = init_models(opt)
         if (nfc_prev == opt.nfc):
@@ -405,7 +402,7 @@ def train_paint(opt, Gs, Zs, reals, NoiseAmp, centers, paint_inject_scale):
 
 def init_models(opt):
     # generator initialization:
-    netG = models.ConvLSTMGenerator6(opt).to(opt.device)
+    netG = models.GeneratorConcatSkip2CleanAdd(opt).to(opt.device)
     total_params = sum(p.numel() for p in netG.parameters())
     train_params = sum(p.numel() for p in netG.parameters() if p.requires_grad)
     print(f'number of parameters of generator: total={total_params} train={train_params}')
