@@ -243,13 +243,13 @@ def train_single_scale(netD, netG, reals, Gs, Zs, in_s, NoiseAmp, opt, centers=N
                 Z_opt = z_opt
                 rec_loss = 0
             optimizerG.step()
-			'''
+'''
             if opt.mode == 'train_gif_rnn':
                 g_states = netG.init_hidden(real_batch_sz)
                 fake, _ = netG(noise.detach(), prev, g_states)
             else:
                 fake = netG(noise.detach(), prev)
-			'''
+'''
 
         errG2norecplot.append(errG.detach())
         errG2recplot.append(rec_loss)
