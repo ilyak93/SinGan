@@ -1439,13 +1439,13 @@ class ConvLSTMGenerator6(nn.Module):
     ''' C-RNN-GAN generator
     '''
 
-    def __init__(self, opt, seq_len=15, hidden_units=256, drop_prob=0.6, use_cuda=False):
+    def __init__(self, opt, seq_len=4, hidden_units=256, drop_prob=0.6, use_cuda=False):
         super(ConvLSTMGenerator6, self).__init__()
 
         # params
         self.num_layers = 1
         self.use_cuda = torch.cuda.is_available()
-        self.seq_len = 15
+        self.seq_len = seq_len
 
         N = opt.nfc
         self.head = ConvBlock(opt.nc_im, N, opt.ker_size, opt.padd_size,
