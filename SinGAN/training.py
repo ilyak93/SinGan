@@ -25,7 +25,7 @@ def train(opt, Gs, Zs, reals, NoiseAmp):
     #NoiseAmp = torch.load('%s/NoiseAmp.pth' % (path))
     #in_s = torch.load('TrainedModels/animation_input/scale_factor=0.750000,alpha=10/in_s.pt')
 
-    while scale_num < opt.stop_scale // 2:
+    while scale_num < opt.stop_scale + 1:
         opt.attn = False
 
         opt.nfc = min(opt.nfc_init * pow(2, math.floor(scale_num / 4)), 128)
