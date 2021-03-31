@@ -118,7 +118,7 @@ def train_single_scale(netD, netG, reals, Gs, Zs, in_s, NoiseAmp, opt, centers=N
     z_opt2plot = []
 
     real_batch_sz = 1
-	opt.niter = 1000
+    opt.niter = 1000
     for epoch in range(opt.niter):
         if (Gs == []) & (opt.mode != 'SR_train'):
             z_opt = functions.generate_noise([1, opt.nzx, opt.nzy], real.shape[0], device=opt.device)
