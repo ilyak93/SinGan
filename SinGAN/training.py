@@ -264,7 +264,7 @@ def train_single_scale(netD, netG, reals, Gs, Zs, in_s, NoiseAmp, opt, centers=N
         if epoch % 25 == 0 or epoch == (opt.niter - 1):
             print('scale %d:[%d/%d]' % (len(Gs), epoch, opt.niter))
         alloc = torch.cuda.memory_allocated()
-        if epoch % 500 == 0 or epoch == (opt.niter - 1) || alloc > 15500000000:
+        if epoch % 500 == 0 or epoch == (opt.niter - 1) or alloc > 15500000000:
             functions.im_save('fake_sample', opt.outf, fake.detach(), vmin=0, vmax=1)
             #plt.imsave('%s/fake_sample.png' % (opt.outf), functions.convert_image_np(fake.detach()), vmin=0, vmax=1)
             if opt.mode == 'train_gif_rnn':
