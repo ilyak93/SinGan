@@ -118,9 +118,9 @@ def train_single_scale(netD, netG, reals, Gs, Zs, in_s, NoiseAmp, opt, centers=N
     z_opt2plot = []
     
     real_batch_sz = 1
-    oom = False
-    try:
-        for epoch in range(opt.niter):
+    
+    for epoch in range(opt.niter):
+        try:
             if (Gs == []) & (opt.mode != 'SR_train'):
                 z_opt = functions.generate_noise([1, opt.nzx, opt.nzy], real.shape[0], device=opt.device)
                 z_opt = m_noise(z_opt.expand(real.shape[0], 3, opt.nzx, opt.nzy))
@@ -305,8 +305,6 @@ def train_single_scale(netD, netG, reals, Gs, Zs, in_s, NoiseAmp, opt, centers=N
             schedulerG.step()
         except:
             oom = True
-        if oom:
-            break
         
 
     functions.save_networks(netG, netD, z_opt, opt)
