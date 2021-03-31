@@ -267,7 +267,8 @@ def train_single_scale(netD, netG, reals, Gs, Zs, in_s, NoiseAmp, opt, centers=N
             reserved = torch.cuda.memory_reserved()
             print('allocated mem = ' + str(alloc))
             print('reserved = ' + str(reserved))
-            print('free = ' + str(reserved - alloc))
+            total = torch.cuda.get_device_properties().total_memory
+            print(total)
 
         if epoch % 500 == 0 or epoch == (opt.niter - 1):
             functions.im_save('fake_sample', opt.outf, fake.detach(), vmin=0, vmax=1)
