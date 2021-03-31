@@ -116,11 +116,9 @@ def train_single_scale(netD, netG, reals, Gs, Zs, in_s, NoiseAmp, opt, centers=N
     D_fake2plot = []
     D_penality = []
     z_opt2plot = []
-
+    
     real_batch_sz = 1
     for epoch in range(opt.niter):
-        if epoch >= 4:
-        epoch = epoch // 2
         if (Gs == []) & (opt.mode != 'SR_train'):
             z_opt = functions.generate_noise([1, opt.nzx, opt.nzy], real.shape[0], device=opt.device)
             z_opt = m_noise(z_opt.expand(real.shape[0], 3, opt.nzx, opt.nzy))
@@ -129,6 +127,8 @@ def train_single_scale(netD, netG, reals, Gs, Zs, in_s, NoiseAmp, opt, centers=N
         else:
             noise_ = functions.generate_noise([opt.nc_z, opt.nzx, opt.nzy], real.shape[0], device=opt.device)
             noise_ = m_noise(noise_)
+        
+        
 
         ############################
         # (1) Update D network: maximize D(x) + D(G(z))
@@ -263,6 +263,8 @@ def train_single_scale(netD, netG, reals, Gs, Zs, in_s, NoiseAmp, opt, centers=N
 
         if epoch % 25 == 0 or epoch == (opt.niter - 1):
             print('scale %d:[%d/%d]' % (len(Gs), epoch, opt.niter))
+            mm = torch.cuda.memory_allocated()  
+            print('allocated mem = ' + str(mm))
 
         if epoch % 500 == 0 or epoch == (opt.niter - 1):
             functions.im_save('fake_sample', opt.outf, fake.detach(), vmin=0, vmax=1)
