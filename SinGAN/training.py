@@ -266,8 +266,7 @@ def train_single_scale(netD, netG, reals, Gs, Zs, in_s, NoiseAmp, opt, centers=N
 
             if epoch % 25 == 0 or epoch == (opt.niter - 1):
                 print('scale %d:[%d/%d]' % (len(Gs), epoch, opt.niter))
-            alloc = torch.cuda.memory_allocated()
-            print(alloc)
+            
             if epoch % 500 == 0 or epoch == (opt.niter - 1):
                 functions.im_save('fake_sample', opt.outf, fake.detach(), vmin=0, vmax=1)
                 #plt.imsave('%s/fake_sample.png' % (opt.outf), functions.convert_image_np(fake.detach()), vmin=0, vmax=1)
@@ -308,6 +307,40 @@ def train_single_scale(netD, netG, reals, Gs, Zs, in_s, NoiseAmp, opt, centers=N
             oom = True
             
         if oom == True:
+            alloc = torch.cuda.memory_allocated()
+            print(alloc)
+            functions.im_save('fake_sample', opt.outf, fake.detach(), vmin=0, vmax=1)
+            #plt.imsave('%s/fake_sample.png' % (opt.outf), functions.convert_image_np(fake.detach()), vmin=0, vmax=1)
+            if opt.mode == 'train_gif_rnn':
+                g_states = netG.init_hidden(real_batch_sz)
+                G_opt, _ = netG(Z_opt.detach(), z_prev, g_states)
+            else:
+                G_opt = netG(Z_opt.detach(), z_prev)
+            G_opt = G_opt.detach()
+            functions.im_save('G(z_opt)', opt.outf, G_opt, vmin=0, vmax=1)
+            #plt.imsave('%s/G(z_opt).png' % (opt.outf),
+            #           functions.convert_image_np(netG(Z_opt.detach(), z_prev, g_states).detach()), vmin=0, vmax=1)
+            # plt.imsave('%s/D_fake.png'   % (opt.outf), functions.convert_image_np(D_fake_map))
+            # plt.imsave('%s/D_real.png'   % (opt.outf), functions.convert_image_np(D_real_map))
+            # plt.imsave('%s/z_opt.png'    % (opt.outf), functions.convert_image_np(z_opt.detach()), vmin=0, vmax=1)
+            # plt.imsave('%s/prev.png'     %  (opt.outf), functions.convert_image_np(prev), vmin=0, vmax=1)
+            # plt.imsave('%s/noise.png'    %  (opt.outf), functions.convert_image_np(noise), vmin=0, vmax=1)
+            # plt.imsave('%s/z_prev.png'   % (opt.outf), functions.convert_image_np(z_prev), vmin=0, vmax=1)
+
+            torch.save(z_opt, '%s/z_opt.pth' % (opt.outf))
+
+            print('Generator loss:')
+            plt.plot(list(range(0, len(errG2plot))), errG2plot)
+            plt.show()
+            print('Discriminator real loss:')
+            plt.plot(list(range(0, len(D_real2plot))), D_real2plot)
+            plt.show()
+            print('Discriminator fake loss:')
+            plt.plot(list(range(0, len(D_fake2plot))), D_fake2plot)
+            plt.show()
+            print('Reconstruction loss:')
+            plt.plot(list(range(0, len(errG2recplot))), errG2recplot)
+            plt.show()
             break
         
 
