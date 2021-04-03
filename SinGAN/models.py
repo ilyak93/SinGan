@@ -1501,3 +1501,46 @@ class ConvLSTMGenerator6(nn.Module):
         for i in range(num_of_hiddens):
             init_states.append(self.cell_list[i].init_hidden(batch_size, image_size))
         return init_states
+        
+        
+class ConvLSTMGenerator7(nn.Module):
+    ''' C-RNN-GAN generator
+    '''
+
+    def __init__(self, opt, seq_len=15, hidden_units=256, drop_prob=0.6, use_cuda=False):
+        super(ConvLSTMGenerator7, self).__init__()
+
+        # params
+        self.num_layers = 1
+        self.use_cuda = torch.cuda.is_available()
+
+        N = opt.nfc
+        self.head = ConvBlock(opt.nc_im, N, opt.ker_size, opt.padd_size,
+                              1)  # GenConvTransBlock(opt.nc_z,N,opt.ker_size,opt.padd_size,opt.stride)
+        self.body = nn.Sequential()
+        for i in range(opt.num_layer - 2):
+            N = int(opt.nfc / pow(2, (i + 1)))
+            block = ConvBlock(max(2 * N, opt.min_nfc), max(N, opt.min_nfc), opt.ker_size, opt.padd_size, 1)
+            self.body.add_module('block%d' % (i + 1), block)
+
+        self.tail = nn.Sequential(
+            nn.Conv2d(max(N, opt.min_nfc), opt.nc_im, kernel_size=opt.ker_size, stride=1, padding=opt.padd_size),
+            nn.Tanh()
+        )
+
+        hidden = [max(N, opt.min_nfc) for _ in range(seq_len)]
+        self.lstm = ConvLSTM(input_dim=max(N, opt.min_nfc), hidden_dim=hidden,
+                             num_layers=seq_len, kernel_size=(3, 3),
+                             batch_first=True, return_all_layers=True)
+
+    def forward(self, x, y):
+        x = self.head(x[0,:,:,:].unsqueeze(0))
+        x = self.body(x)
+        x_hat = self.lstm(x.unsqueeze(0), None)
+        x = x_hat[0]
+        x = torch.stack(x, dim=0).squeeze()
+        x = self.tail(x)
+
+        ind = int((y.shape[2] - x.shape[2]) / 2)
+        y = y[:, :, ind:(y.shape[2] - ind), ind:(y.shape[3] - ind)]
+        return x + y
