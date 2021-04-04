@@ -1439,7 +1439,7 @@ class ConvLSTMGenerator6(nn.Module):
     ''' C-RNN-GAN generator
     '''
 
-    def __init__(self, opt, seq_len=15, hidden_units=256, drop_prob=0.6, use_cuda=False):
+    def __init__(self, opt, seq_len=12, hidden_units=256, drop_prob=0.6, use_cuda=False):
         super(ConvLSTMGenerator6, self).__init__()
 
         # params
