@@ -450,7 +450,7 @@ def train_paint(opt, Gs, Zs, reals, NoiseAmp, centers, paint_inject_scale):
 
 def init_models(opt):
     # generator initialization:
-    netG = models.GeneratorConcatSkip2CleanAdd(opt).to(opt.device)
+    netG = models.ConvLSTMGenerator2(opt).to(opt.device)
     total_params = sum(p.numel() for p in netG.parameters())
     train_params = sum(p.numel() for p in netG.parameters() if p.requires_grad)
     print(f'number of parameters of generator: total={total_params} train={train_params}')
